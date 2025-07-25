@@ -893,3 +893,35 @@ body::before {
   opacity: 1;
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* Add to existing CSS */
+.bot-link {
+  display: inline-block;
+  background: #4ecdc4;
+  color: #0f0f23;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  margin: 0 5px;
+  transition: all 0.3s ease;
+}
+
+.bot-link:hover {
+  background: #3bb5ac;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(78, 205, 196, 0.4);
+}
+
+.status-popup.error ol {
+  margin-bottom: 15px;
+}
+
+.try-again {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(78, 205, 196, 0.15);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+}
