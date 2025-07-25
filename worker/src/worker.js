@@ -102,21 +102,18 @@ async function handleBotCommand(request, env) {
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
   const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
-  
+  const photoUrl = "https://i.imgur.com/your-image.jpg"; // Replace with your image URL
+
   const buttons = [
-    [
-      { 
-        text: "📚 Repo", 
-        url: "https://github.com/tharindu899/IMDB-TG-POST" 
-      },
-      { 
-        text: "🖇️ Site", 
-        url: "https://imdb-tg-post-font.pages.dev" 
-      }
+   [
+      { text: "📚 Repo", 
+        url: "https://github.com/tharindu899/IMDB-TG-POST" },
+      { text: "🖇️ Site",
+        url: "https://imdb-tg-post-font.pages.dev" }
     ]
   ];
 
-  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  await sendPhotoMessage(BOT_TOKEN, chatId, photoUrl, message, buttons);
   return new Response('OK');
 }
 
@@ -127,31 +124,30 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
     `*How to use:*\n` +
     `1. Add me to your channel as admin\n` +
     `2. Go to site & explore\n` +
-    `3. Add your channel ID form the top setting botton\n\n` +
-    `4. save and use your imdb and link share to Telegram channel:`;
-  
+    `3. Add your channel ID from the top setting button\n` +
+    `4. Save and share your IMDb link to the Telegram channel.`;
+
+  const photoUrl = "https://i.imgur.com/your-help-image.jpg"; // Replace with your image URL
+
   const buttons = [
     [
-      { text: "📚 Owner",
+      { text: "📚 Owner", 
         url: "https://t.me/SLtharindu1" },
-      { text: "🎥 Tutorial",
+      { text: "🎥 Tutorial", 
         url: "https://example.com/tutorial" }
     ],
-//     [
-//       { text: "🛠️ Setup",
-//         url: "https://t.me/flixora_site" }
-//     ],
     [
-      { text: "❓ Support",
+      { text: "❓ Support", 
         url: "https://t.me/SLtharindu1" },
       { text: "🐛 Report Issue", 
         url: "https://t.me/SLtharindu1" }
     ]
   ];
 
-  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  await sendPhotoMessage(BOT_TOKEN, chatId, photoUrl, message, buttons);
   return new Response('OK');
 }
+
 
 async function sendToTelegram(payload, env) {
   // Get environment variables
