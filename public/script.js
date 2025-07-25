@@ -466,7 +466,7 @@ async function handlePost() {
         responseData.result.includes('not an admin')) {
       createBotAdminPopup({
         message: responseData.result,
-        botUsername: responseData.botUsername || 'your_bot'
+        botUsername: responseData.botUsername || 'your_bot_username'
       });
     }
     
@@ -477,6 +477,9 @@ async function handlePost() {
 }
 
 function createBotAdminPopup(errorData) {
+  // Use the botUsername from errorData, or a fallback if not provided
+  const botUsername = errorData.botUsername || 'your_bot_username';
+
   const popup = document.createElement('div');
   popup.className = 'status-popup error';
   
@@ -489,14 +492,14 @@ function createBotAdminPopup(errorData) {
         <p>Please follow these steps:</p>
         <ol>
           <li>Add bot to your channel: 
-            <a href="https://t.me/${errorData.botUsername}" 
+            <a href="https://t.me/${botUsername}" 
                target="_blank" 
                class="bot-link">
-              @${errorData.botUsername}
+              @${botUsername}
             </a>
           </li>
           <li>Go to Channel Info > Administrators > Add Admin</li>
-          <li>Search for <strong>@${errorData.botUsername}</strong></li>
+          <li>Search for <strong>@${botUsername}</strong></li>
           <li>Grant <strong>"Post Messages"</strong> permission</li>
           <li>Make sure to click <strong>"Save"</strong></li>
         </ol>
