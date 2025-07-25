@@ -398,7 +398,7 @@ async function handlePost() {
     return;
   }
   
-    // Add channelId to payload
+  // Construct payload
   const payload = {
     title,
     choice_idx: choiceIdx.toString(),
@@ -406,21 +406,10 @@ async function handlePost() {
     episode,
     custom_link: customLinkValue,
     note,
-    channel_id: channelId  // Add channel ID to payload
+    channel_id: channelId
   };
 
   try {
-    // Correct payload format for worker
-    const payload = {
-      title,
-      choice_idx: choiceIdx.toString(),
-      season,
-      episode,
-      custom_link: customLinkValue,
-      note
-    };
-
-    // In handlePost function
     const response = await fetch(workerUrl, {
       method: 'POST',
       headers: {
@@ -430,7 +419,14 @@ async function handlePost() {
       body: JSON.stringify(payload)
     });
 
-    const responseData = await response.json();
+    // Handle non-JSON responses
+    const responseText = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Invalid server response: ${responseText.slice(0, 100)}`);
+    }
 
     if (!response.ok) {
       throw new Error(responseData.error || `Failed to post: ${response.status}`);
@@ -445,7 +441,7 @@ async function handlePost() {
       customLink.value = '';
       noteInput.value = '';
       resetPreview();
-      populateCustomDropdown(); // Update custom dropdown after reset
+      populateCustomDropdown();
     }
 
     // Update status based on worker response
