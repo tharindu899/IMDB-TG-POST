@@ -350,9 +350,65 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
       // Continue to next source
     }
   }
+  
+    // Verify bot is admin in channel
+  const botStatus = await checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID);
+  if (botStatus.error) {
+    return botStatus.message;
+  }
+  if (!botStatus.isAdmin) {
+    return `❌ Bot is not an admin in your channel. Please make sure:\n\n` +
+           `1. Add @${botStatus.botUsername} to your channel\n` +
+           `2. Promote it to admin with "Post Messages" permission\n` +
+           `3. Try posting again`;
+  }
 
   // All image sources failed - fallback to text message
   return await sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons);
+}
+
+async function checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID) {
+  try {
+    // Get bot info
+    const botInfoUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getMe`;
+    const botInfoResponse = await fetch(botInfoUrl);
+    const botInfo = await botInfoResponse.json();
+    
+    if (!botInfo.ok) {
+      return {
+        error: true,
+        message: `❌ Failed to get bot info: ${botInfo.description || 'Unknown error'}`
+      };
+    }
+    
+    const botUsername = botInfo.result.username;
+    const botId = botInfo.result.id;
+    
+    // Check bot's status in the channel
+    const memberInfoUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(CHANNEL_ID)}&user_id=${botId}`;
+    const memberResponse = await fetch(memberInfoUrl);
+    const memberInfo = await memberResponse.json();
+    
+    if (!memberInfo.ok) {
+      return {
+        error: true,
+        message: `❌ Failed to check bot status: ${memberInfo.description || 'Unknown error'}`,
+        botUsername
+      };
+    }
+    
+    const isAdmin = ["administrator", "creator"].includes(memberInfo.result.status);
+    return {
+      isAdmin,
+      botUsername,
+      error: false
+    };
+  } catch (error) {
+    return {
+      error: true,
+      message: `❌ Error checking bot status: ${error.message}`
+    };
+  }
 }
 
 // Dedicated function for sending text messages
