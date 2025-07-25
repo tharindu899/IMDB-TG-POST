@@ -837,3 +837,44 @@ body::before {
     grid-template-columns: 400px 1fr;
   }
 }
+
+/* Add to existing CSS */
+.status-popup.error .status-text {
+  text-align: left;
+}
+
+.status-popup.error strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.status-popup.error ol {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.status-popup.error li {
+  margin-bottom: 8px;
+}
+
+.close-popup {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 24px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close-popup:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
