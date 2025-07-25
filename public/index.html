@@ -1,0 +1,129 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎬 CinemaHub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="floating-elements">
+    <div class="floating-circle"></div>
+    <div class="floating-circle"></div>
+    <div class="floating-circle"></div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Settings</h2>
+      <div class="form-group">
+        <label for="channelIdInput">Telegram Channel ID:</label>
+        <input type="text" id="channelIdInput" class="form-control" placeholder="@channelname or -100123456789">
+      </div>
+      <div class="button-group">
+        <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+        <button id="clearSettingsBtn" class="btn-secondary">Clear Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status popup container -->
+  <div class="status-popup-container" id="statusPopupContainer"></div>
+
+  <div class="main-container">
+    <header class="app-header">
+      <div>
+        <h1 class="app-title">🎬 imdb post</h1>
+<!--         <p class="app-subtitle">Share content to Telegram channels</p> -->
+      </div>
+      <button id="settingsBtn" class="settings-btn">⚙️</button>
+    </header>
+    
+
+    <aside class="sidebar">
+      <div class="preview-container">
+        <div id="moviePoster" class="movie-poster"></div>
+        <div class="movie-info">
+          <h3 id="movieTitle" class="movie-title">Select Content</h3>
+          <div class="movie-meta">
+            <span id="movieYear" class="movie-year">Year</span>
+            <span id="movieRating" class="movie-rating">N/A</span>
+          </div>
+          <p id="moviePlot" class="movie-plot">Search and select a movie or series to see details here</p>
+          <div id="movieNote" class="movie-note" style="display: none;">No note added</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content-area">
+      <div class="card">
+
+        <div class="search-container">
+          <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Content">
+          <button id="searchBtn" class="search-btn">🔍</button>
+        </div>
+        
+        <!-- Updated dropdown container -->
+        <div class="form-group">
+          <div class="custom-select-container">
+            <select id="resultSelect" class="original-select" style="display: none;">
+              <option value="">📋 Select Result</option>
+            </select>
+            <div class="custom-select">
+              <div class="selected-option">
+                <span class="selected-text">📋 Select Result</span>
+                <div class="custom-arrow">
+                  <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path fill="currentColor" d="M7 10l5 5 5-5z"></path>
+                  </svg>
+                </div>
+              </div>
+              <div class="custom-options">
+                <!-- Options will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title collapsible">
+          📺 Episode Details & Note <span id="toggle-icon">▲</span>
+        </h2>
+        
+        <div id="collapse-content" class="collapsible-content collapsible">
+          <div class="form-group">
+            <div class="episode-row">
+              <div class="episode-field">
+                <input type="number" id="seasonInput" class="form-control" placeholder="Season" min="1">
+              </div>
+              <div class="episode-field">
+                <input type="number" id="episodeInput" class="form-control" placeholder="Episode" min="1">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <input type="url" id="customLink" class="form-control" placeholder="Custom Link (Optional) https://...">
+          </div>
+
+          <div class="form-group">
+            <textarea id="noteInput" class="form-control textarea-control" placeholder="Add your note or review..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <button id="postBtn" class="btn-primary" disabled>
+          <span>📱</span> Post to Telegram
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
