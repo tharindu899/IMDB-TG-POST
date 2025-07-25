@@ -8,6 +8,13 @@ const handleCors = (response) => {
 export default {
   async fetch(request, env) {
     try {
+      const url = new URL(request.url);
+      
+      // Handle bot commands
+      if (url.pathname === '/bot' && request.method === 'POST') {
+        return handleBotCommand(request, env);
+      }
+
       // Handle CORS preflight
       if (request.method === 'OPTIONS') {
         return handleCors(new Response(null, { status: 204 }));
@@ -64,6 +71,81 @@ export default {
       );
     }
   }
+}
+
+
+// New function to handle bot commands
+async function handleBotCommand(request, env) {
+  const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
+  if (!BOT_TOKEN) {
+    return new Response('Bot token missing', { status: 500 });
+  }
+
+  try {
+    const update = await request.json();
+    if (update.message && update.message.text) {
+      const chatId = update.message.chat.id;
+      const text = update.message.text;
+
+      if (text === '/start') {
+        return handleStartCommand(BOT_TOKEN, chatId);
+      } else if (text === '/help') {
+        return handleHelpCommand(BOT_TOKEN, chatId);
+      }
+    }
+    
+    return new Response('OK');
+  } catch (error) {
+    return new Response(`Error: ${error.message}`, { status: 400 });
+  }
+}
+
+async function handleStartCommand(BOT_TOKEN, chatId) {
+  const message = `🎬 *Welcome to Content Notification Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
+  
+  const buttons = [
+    [
+      { 
+        text: "📚 Documentation", 
+        url: "https://example.com/docs" 
+      },
+      { 
+        text: "🛠️ Setup Guide", 
+        url: "https://example.com/setup" 
+      }
+    ]
+  ];
+
+  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  return new Response('OK');
+}
+
+async function handleHelpCommand(BOT_TOKEN, chatId) {
+  const message = `🤖 *Bot Help Center*\n\nHere are the available commands:\n\n` +
+    `• /start - Welcome message with setup links\n` +
+    `• /help - Show this help message\n\n` +
+    `*How to use:*\n` +
+    `1. Add me to your channel as admin\n` +
+    `2. Use the API to post content updates\n` +
+    `3. Configure your channel ID and auth token\n\n` +
+    `Need more help? Use the buttons below:`;
+  
+  const buttons = [
+    [
+      { text: "📚 Full Documentation", url: "https://example.com/docs" },
+      { text: "🎥 Video Tutorial", url: "https://example.com/tutorial" }
+    ],
+    [
+      { text: "🛠️ Setup Guide", url: "https://example.com/setup" }
+    ],
+    [
+      { text: "❓ Support Chat", url: "https://t.me/support_chat" },
+      { text: "🐛 Report Issue", url: "https://example.com/issues" }
+    ]
+  ];
+
+  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  return new Response('OK');
 }
 
 async function sendToTelegram(payload, env) {
