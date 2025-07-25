@@ -1,4 +1,4 @@
-name = "tmdb-send-back"
+name = "imdb-tg-post-back"
 main = "src/worker.js"
 compatibility_date = "2024-01-01"
 account_id = "__ACCOUNT_ID__"
