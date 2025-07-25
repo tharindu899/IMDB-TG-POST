@@ -450,6 +450,49 @@ async function handlePost() {
     } else {
       updateStatus(responseData.result, 'success');
     }
+    
+    let resultMessage = responseData.result;
+    
+    // Add special handling for admin errors
+    if (resultMessage.includes('Bot is not an admin')) {
+      // Create a more user-friendly message with instructions
+      const botUsername = resultMessage.match(/@(\w+)/)?.[0] || 'your bot';
+      
+      statusPopupContainer.innerHTML = `
+        <div class="status-popup error">
+          <div class="status-popup-content">
+            <div class="status-icon">❌</div>
+            <div class="status-text">
+              <strong>Admin Required!</strong>
+              <p>Please add ${botUsername} to your channel as an admin:</p>
+              <ol>
+                <li>Open your Telegram channel</li>
+                <li>Go to Channel Info > Administrators</li>
+                <li>Add ${botUsername}</li>
+                <li>Grant "Post Messages" permission</li>
+                <li>Try posting again</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Make popup persistent until dismissed
+      const popup = statusPopupContainer.firstChild;
+      popup.classList.add('show');
+      
+      // Add close button
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = '×';
+      closeBtn.className = 'close-popup';
+      closeBtn.addEventListener('click', () => {
+        statusPopupContainer.removeChild(popup);
+      });
+      popup.appendChild(closeBtn);
+      
+      return;
+    }
+    
   } catch (error) {
     updateStatus(`❌ Error: ${error.message}`, 'error');
     console.error('Posting error:', error);
