@@ -263,6 +263,7 @@ async function handleSearch() {
       updateStatus('❌ No results found', 'error');
       resultSelect.innerHTML = '<option value="">No results found</option>';
       populateCustomDropdown();
+      resetPreview();
       return;
     }
 
@@ -280,7 +281,17 @@ async function handleSearch() {
 
     // Select first result automatically
     if (searchResults.length > 0) {
+      // Set both the native select and custom dropdown
       resultSelect.value = "0";
+      
+      // Update custom dropdown to show the selected item
+      const customSelect = document.querySelector('.custom-select');
+      const selectedText = document.querySelector('.selected-text');
+      if (selectedText) {
+        selectedText.textContent = resultSelect.options[1].textContent; // [0] is placeholder, [1] is first result
+      }
+      
+      // Trigger change event to update preview
       resultSelect.dispatchEvent(new Event('change'));
     }
 
