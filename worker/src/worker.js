@@ -126,9 +126,9 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
     `• /help - Show this help message\n\n` +
     `*How to use:*\n` +
     `1. Add me to your channel as admin\n` +
-    `2. Use the API to post content updates\n` +
-    `3. Configure your channel ID and auth token\n\n` +
-    `Need more help? Use the buttons below:`;
+    `2. Go to site & explore\n` +
+    `3. Add your channel ID form the top setting botton\n\n` +
+    `4. save and use your imdb and link share to Telegram channel:`;
   
   const buttons = [
     [
@@ -137,15 +137,15 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
       { text: "🎥 Tutorial",
         url: "https://example.com/tutorial" }
     ],
-    [
-      { text: "🛠️ Setup",
-        url: "https://t.me/flixora_site" }
-    ],
+//     [
+//       { text: "🛠️ Setup",
+//         url: "https://t.me/flixora_site" }
+//     ],
     [
       { text: "❓ Support",
-        url: "https://t.me/flixora_site" },
+        url: "https://t.me/SLtharindu1" },
       { text: "🐛 Report Issue", 
-        url: "https://t.me/flixora_site" }
+        url: "https://t.me/SLtharindu1" }
     ]
   ];
 
