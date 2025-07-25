@@ -1,5 +1,5 @@
 {
-  "name": "movie-backdrop-worker",
+  "name": "imdb-tg-post-back",
   "version": "1.0.0",
   "scripts": {
     "deploy": "wrangler deploy"
