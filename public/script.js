@@ -251,15 +251,34 @@ async function handleSearch() {
   try {
     updateStatus('🔍 Searching TMDB...', 'loading');
     
-    // Real TMDB API call
-    const response = await fetch(
-      `https://api.themoviedb.org/3/search/multi?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(title)}`
-    );
+    // Improved regex to handle various title formats
+    const regex = /^(.*?)(?:\s+\((\d{4})\)|\s+(\d{4}))?$/;
+    const match = title.match(regex);
+    const cleanTitle = (match[1] || title).trim();
+    const year = match[2] || match[3] || '';
 
+    // Build API URL
+    let apiUrl = `https://api.themoviedb.org/3/search/multi?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(cleanTitle)}&include_adult=false`;
+    if (year) {
+      apiUrl += `&year=${year}`;
+    }
+
+    // TMDB API call
+    const response = await fetch(apiUrl);
     if (!response.ok) throw new Error(`API error: ${response.status}`);
-
     const data = await response.json();
-    searchResults = data.results || [];
+
+    // Filter and sort results
+    searchResults = (data.results || [])
+      .filter(item => 
+        item.media_type === 'movie' || 
+        item.media_type === 'tv'
+      )
+      .sort((a, b) => 
+        (b.popularity || 0) - (a.popularity || 0) ||  // Sort by popularity
+        (b.vote_count || 0) - (a.vote_count || 0)    // Then by vote count
+      )
+      .slice(0, 10);  // Limit to top 10 results
 
     if (searchResults.length === 0) {
       updateStatus('❌ No results found', 'error');
@@ -269,7 +288,7 @@ async function handleSearch() {
       return;
     }
 
-    // Populate original dropdown
+    // Populate dropdowns
     resultSelect.innerHTML = '<option value="">📋 Select Result</option>';
     searchResults.forEach((result, index) => {
       const option = document.createElement('option');
@@ -277,13 +296,24 @@ async function handleSearch() {
       option.textContent = formatDropdownOption(result);
       resultSelect.appendChild(option);
     });
-
-    // Populate custom dropdown
     populateCustomDropdown();
 
-    updateStatus(`✅ Found ${searchResults.length} results`, 'success');
+    // Auto-select first result if perfect match exists
+    const exactMatch = searchResults.find(item => {
+      const itemTitle = (item.title || item.name || '').toLowerCase();
+      return itemTitle === cleanTitle.toLowerCase();
+    });
+    
+    if (exactMatch) {
+      const matchIndex = searchResults.indexOf(exactMatch);
+      resultSelect.value = matchIndex;
+      updatePreview();
+    }
+
+    updateStatus(`✅ Found ${searchResults.length} best matches`, 'success');
   } catch (error) {
     updateStatus(`❌ Error: ${error.message}`, 'error');
+    console.error('Search error:', error);
   }
 }
 
