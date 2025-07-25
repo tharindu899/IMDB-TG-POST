@@ -390,6 +390,14 @@ async function checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID) {
     const memberInfo = await memberResponse.json();
     
     if (!memberInfo.ok) {
+      // Handle specific "member list inaccessible" error
+      if (memberInfo.description.includes("member list is inaccessible")) {
+        return {
+          error: true,
+          message: `❌ Bot is not in your channel. Please add @${botUsername} to your channel first!`,
+          botUsername
+        };
+      }
       return {
         error: true,
         message: `❌ Failed to check bot status: ${memberInfo.description || 'Unknown error'}`,
