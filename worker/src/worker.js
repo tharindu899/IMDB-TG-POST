@@ -8,12 +8,6 @@ const handleCors = (response) => {
 export default {
   async fetch(request, env) {
     try {
-      const url = new URL(request.url);
-      
-      // Handle bot commands at /bot endpoint
-      if (url.pathname === '/bot') {
-        return handleTelegramWebhook(request, env);
-      }
       // Handle CORS preflight
       if (request.method === 'OPTIONS') {
         return handleCors(new Response(null, { status: 204 }));
@@ -69,94 +63,6 @@ export default {
         })
       );
     }
-  }
-}
-
-// New Telegram bot command handler
-async function handleTelegramWebhook(request, env) {
-  // Verify secret token
-  const secretToken = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
-  if (secretToken !== env.WEBHOOK_SECRET) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  try {
-    const update = await request.json();
-    if (!update.message || !update.message.text) {
-      return new Response('OK', { status: 200 });
-    }
-
-    const chatId = update.message.chat.id;
-    const text = update.message.text;
-
-    if (text.startsWith('/start')) {
-      return await handleStartCommand(env, chatId);
-    } else if (text.startsWith('/help')) {
-      return await handleHelpCommand(env, chatId);
-    }
-
-    return new Response('OK', { status: 200 });
-  } catch (e) {
-    return new Response('Error', { status: 500 });
-  }
-}
-
-// Handle /start command
-async function handleStartCommand(env, chatId) {
-  const message = `🌟 *Welcome to Content Poster Bot!* 🌟\n\nI help you share new content updates with your audience. Ready to get started?`;
-  
-  const buttons = [
-    [{ text: "🚀 Post New Content", callback_data: "post_content" }],
-    [{ text: "⚙️ Setup Guide", url: "https://example.com/setup" }],
-    [{ text: "📣 Our Channel", url: "https://t.me/yourchannel" }],
-    [{ text: "💬 Support Chat", url: "https://t.me/yoursupport" }]
-  ];
-
-  await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK', { status: 200 });
-}
-
-// Handle /help command
-async function handleHelpCommand(env, chatId) {
-  const message = `🆘 *Bot Help Center* 🆘\n\nHere's how to use me:\n\n` +
-                  `1. Use /start to begin\n` +
-                  `2. Setup your channel with /setup\n` +
-                  `3. Post content using our web interface\n\n` +
-                  `Need more assistance?`;
-  
-  const buttons = [
-    [{ text: "📚 Documentation", url: "https://example.com/docs" }],
-    [{ text: "🛠️ Troubleshooting", callback_data: "troubleshoot" }],
-    [{ text: "📝 Report Issue", url: "https://example.com/issues" }],
-    [{ text: "👨‍💻 Contact Admin", url: "https://t.me/admin" }]
-  ];
-
-  await sendTelegramMessage(env.TELEGRAM_BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK', { status: 200 });
-}
-
-async function sendTelegramMessage(BOT_TOKEN, chatId, message, buttons) {
-  try {
-    const payload = {
-      chat_id: chatId,
-      text: message,
-      parse_mode: "Markdown",
-      reply_markup: { inline_keyboard: buttons }
-    };
-    
-    const response = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }
-    );
-
-    return await response.json();
-  } catch (e) {
-    console.error('Telegram message error:', e);
-    return { ok: false, error: e.message };
   }
 }
 
