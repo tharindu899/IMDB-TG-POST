@@ -102,7 +102,7 @@ async function handleBotCommand(request, env) {
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
   const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
-  const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
+  // const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
 
   const buttons = [
    [
@@ -113,7 +113,7 @@ async function handleStartCommand(BOT_TOKEN, chatId) {
     ]
   ];
 
-  await sendPhotoMessage(BOT_TOKEN, chatId, photoUrl, message, buttons);
+  await sendPhotoMessage(BOT_TOKEN, chatId, message, buttons);
   return new Response('OK');
 }
 
@@ -127,7 +127,7 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
     `3. Add your channel ID from the top setting button\n` +
     `4. Save and share your IMDb link to the Telegram channel.`;
 
-  const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
+  // const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
 
   const buttons = [
     [
@@ -144,7 +144,7 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
     ]
   ];
 
-  await sendPhotoMessage(BOT_TOKEN, chatId, photoUrl, message, buttons);
+  await sendPhotoMessage(BOT_TOKEN, chatId, message, buttons);
   return new Response('OK');
 }
 
