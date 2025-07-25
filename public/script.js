@@ -420,10 +420,12 @@ async function handlePost() {
       note
     };
 
+    // In handlePost function
     const response = await fetch(workerUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify(payload)
     });
