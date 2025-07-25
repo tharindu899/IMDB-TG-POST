@@ -77,7 +77,6 @@ function initSettings() {
   });
 }
 
-
 // Initialize
 function init() {
   searchBtn.addEventListener('click', handleSearch);
@@ -268,7 +267,7 @@ async function handleSearch() {
     }
 
     // Populate original dropdown
-    resultSelect.innerHTML = 'none';
+    resultSelect.innerHTML = '<option value="">📋 Select Result</option>';
     searchResults.forEach((result, index) => {
       const option = document.createElement('option');
       option.value = index;
@@ -278,6 +277,12 @@ async function handleSearch() {
 
     // Populate custom dropdown
     populateCustomDropdown();
+
+    // Select first result automatically
+    if (searchResults.length > 0) {
+      resultSelect.value = "0";
+      resultSelect.dispatchEvent(new Event('change'));
+    }
 
     updateStatus(`✅ Found ${searchResults.length} results`, 'success');
   } catch (error) {
@@ -291,7 +296,7 @@ function formatDropdownOption(result) {
   const year = result.release_date?.split('-')[0] || result.first_air_date?.split('-')[0] || 'N/A';
   const type = result.media_type === 'movie' ? '🎬' : '📺';
   
-  // FIX: Truncate long titles to prevent layout issues
+  // Truncate long titles to prevent layout issues
   const maxTitleLength = 50;
   const truncatedTitle = title.length > maxTitleLength 
     ? title.substring(0, maxTitleLength) + '...' 
@@ -328,7 +333,10 @@ function updatePreview() {
   // Update text content
   movieTitle.textContent = selectedContent.title || selectedContent.name || 'Untitled';
   movieRating.textContent = selectedContent.vote_average ? `${selectedContent.vote_average.toFixed(1)}/10` : 'N/A';
-  moviePlot.textContent = selectedContent.overview || 'No overview available.';
+  
+  // Set plot text with fallback
+  const plotText = selectedContent.overview || 'No overview available.';
+  moviePlot.textContent = plotText;
   
   const date = selectedContent.release_date || selectedContent.first_air_date || 'Unknown';
   const year = date.split('-')[0];
@@ -421,7 +429,6 @@ async function handlePost() {
 
     // Handle non-JSON responses
     const responseText = await response.text();
-       // Handle JSON responses from worker
     let responseData;
     try {
       responseData = JSON.parse(responseText);
@@ -449,64 +456,18 @@ async function handlePost() {
       noteInput.value = '';
       resetPreview();
       populateCustomDropdown();
-    }
-
-    // Update status based on worker response
-    if (responseData.result.startsWith('❌')) {
-      updateStatus(responseData.result, 'error');
-    } else {
       updateStatus(responseData.result, 'success');
+    } else if (responseData.result.startsWith('❌')) {
+      updateStatus(responseData.result, 'error');
     }
     
-        // Update status based on worker response
-    let resultMessage = responseData.result;
-    
-    // Add special handling for admin errors
-    if (resultMessage.includes('Bot is not in your channel') || 
-        resultMessage.includes('not an admin')) {
-      // Extract bot username from message
-      const botMatch = resultMessage.match(/@(\w+)/);
-      const botUsername = botMatch ? botMatch[0] : 'your bot';
-      
-      // Create persistent error popup
-      const popup = document.createElement('div');
-      popup.className = 'status-popup error';
-      
-      popup.innerHTML = `
-        <div class="status-popup-content">
-          <div class="status-icon">❌</div>
-          <div class="status-text">
-            <strong>Bot Setup Required!</strong>
-            <p>${resultMessage}</p>
-            <p>Please follow these steps:</p>
-            <ol>
-              <li>Open your Telegram channel</li>
-              <li>Go to Channel Info > Administrators > Add Admin</li>
-              <li>Search for ${botUsername}</li>
-              <li>Grant <strong>"Post Messages"</strong> permission</li>
-              <li>Make sure to click <strong>"Save"</strong></li>
-            </ol>
-            <p class="try-again">Try posting again after adding the bot</p>
-          </div>
-          <button class="close-popup">×</button>
-        </div>
-      `;
-      
-      // Clear existing popups
-      statusPopupContainer.innerHTML = '';
-      statusPopupContainer.appendChild(popup);
-      
-      // Add close functionality
-      popup.querySelector('.close-popup').addEventListener('click', () => {
-        statusPopupContainer.removeChild(popup);
+    // Handle special admin errors
+    if (responseData.result.includes('Bot is not in your channel') || 
+        responseData.result.includes('not an admin')) {
+      createBotAdminPopup({
+        message: responseData.result,
+        botUsername: responseData.botUsername || 'your_bot'
       });
-      
-      // Show immediately
-      setTimeout(() => {
-        popup.classList.add('show');
-      }, 10);
-      
-      return;
     }
     
   } catch (error) {
