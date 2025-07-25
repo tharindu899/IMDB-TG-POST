@@ -101,17 +101,17 @@ async function handleBotCommand(request, env) {
 }
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
-  const message = `🎬 *Welcome to Content Notification Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
+  const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
   
   const buttons = [
     [
       { 
-        text: "📚 Documentation", 
-        url: "https://example.com/docs" 
+        text: "📚 Repo", 
+        url: "https://github.com/tharindu899/IMDB-TG-POST" 
       },
       { 
-        text: "🛠️ Setup Guide", 
-        url: "https://example.com/setup" 
+        text: "🖇️ Site", 
+        url: "https://imdb-tg-post-font.pages.dev" 
       }
     ]
   ];
@@ -122,7 +122,7 @@ async function handleStartCommand(BOT_TOKEN, chatId) {
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
   const message = `🤖 *Bot Help Center*\n\nHere are the available commands:\n\n` +
-    `• /start - Welcome message with setup links\n` +
+    `• /start - Welcome IMDB-TG-POST\n` +
     `• /help - Show this help message\n\n` +
     `*How to use:*\n` +
     `1. Add me to your channel as admin\n` +
@@ -132,15 +132,20 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
   
   const buttons = [
     [
-      { text: "📚 Full Documentation", url: "https://example.com/docs" },
-      { text: "🎥 Video Tutorial", url: "https://example.com/tutorial" }
+      { text: "📚 Owner",
+        url: "https://t.me/SLtharindu1" },
+      { text: "🎥 Tutorial",
+        url: "https://example.com/tutorial" }
     ],
     [
-      { text: "🛠️ Setup Guide", url: "https://example.com/setup" }
+      { text: "🛠️ Setup",
+        url: "https://t.me/flixora_site" }
     ],
     [
-      { text: "❓ Support Chat", url: "https://t.me/support_chat" },
-      { text: "🐛 Report Issue", url: "https://example.com/issues" }
+      { text: "❓ Support",
+        url: "https://t.me/flixora_site" },
+      { text: "🐛 Report Issue", 
+        url: "https://t.me/flixora_site" }
     ]
   ];
 
