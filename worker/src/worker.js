@@ -351,16 +351,22 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
     }
   }
   
-    // Verify bot is admin in channel
+// Verify bot is admin in channel
   const botStatus = await checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID);
   if (botStatus.error) {
     return botStatus.message;
   }
   if (!botStatus.isAdmin) {
-    return `❌ Bot is not an admin in your channel. Please make sure:\n\n` +
-           `1. Add @${botStatus.botUsername} to your channel\n` +
-           `2. Promote it to admin with "Post Messages" permission\n` +
-           `3. Try posting again`;
+    return JSON.stringify({
+      type: 'bot_admin_error',
+      message: `❌ Bot is not an admin in your channel.`,
+      botUsername: botStatus.botUsername,
+      instructions: [
+        `1. Add the bot to your channel`,
+        `2. Promote it to admin with "Post Messages" permission`,
+        `3. Try posting again`
+      ]
+    });
   }
 
   // All image sources failed - fallback to text message
