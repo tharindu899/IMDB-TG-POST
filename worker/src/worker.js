@@ -5,6 +5,8 @@ const handleCors = (response) => {
   return response;
 };
 
+const BOT_IMAGE_URL = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg";
+
 export default {
   async fetch(request, env) {
     try {
@@ -100,54 +102,99 @@ async function handleBotCommand(request, env) {
   }
 }
 
+// Update your command handler functions
 async function handleStartCommand(BOT_TOKEN, chatId) {
-  const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
-  // const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
-
+  const message = `🎬 *Welcome to Content Notification Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
+  
   const buttons = [
-   [
-      { text: "📚 Repo", 
-        url: "https://github.com/tharindu899/IMDB-TG-POST" },
-      { text: "🖇️ Site",
-        url: "https://imdb-tg-post-font.pages.dev" }
+    [
+      { 
+        text: "📚 Documentation", 
+        url: "https://example.com/docs" 
+      },
+      { 
+        text: "🛠️ Setup Guide", 
+        url: "https://example.com/setup" 
+      }
     ]
   ];
 
-  await sendPhotoMessage(BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK');
+  try {
+    // Try to send image with caption
+    await sendPhotoMessage(BOT_TOKEN, chatId, BOT_IMAGE_URL, message, buttons);
+  } catch (error) {
+    console.error("Image send failed, falling back to text:", error);
+    // Fallback to text message if image fails
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  }
 }
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
   const message = `🤖 *Bot Help Center*\n\nHere are the available commands:\n\n` +
-    `• /start - Welcome IMDB-TG-POST\n` +
+    `• /start - Welcome message with setup links\n` +
     `• /help - Show this help message\n\n` +
     `*How to use:*\n` +
     `1. Add me to your channel as admin\n` +
-    `2. Go to site & explore\n` +
-    `3. Add your channel ID from the top setting button\n` +
-    `4. Save and share your IMDb link to the Telegram channel.`;
-
-  // const photoUrl = "https://i.ibb.co/Rhf0cD3/You-Tube-banner-logo-with-colorful-design-and-Jinix-text-on-a-white-background-png-edit-407266183438.jpg"; // Replace with your image URL
-
+    `2. Use the API to post content updates\n` +
+    `3. Configure your channel ID and auth token\n\n` +
+    `Need more help? Use the buttons below:`;
+  
   const buttons = [
     [
-      { text: "📚 Owner", 
-        url: "https://t.me/SLtharindu1" },
-      { text: "🎥 Tutorial", 
-        url: "https://t.me/SLtharindu1" }
+      { text: "📚 Full Documentation", url: "https://example.com/docs" },
+      { text: "🎥 Video Tutorial", url: "https://example.com/tutorial" }
     ],
     [
-      { text: "❓ Web", 
-        url: "https://toxybox99.eu.org" },
-      { text: "🐛 Report Issue", 
-        url: "https://t.me/SLtharindu1" }
+      { text: "🛠️ Setup Guide", url: "https://example.com/setup" }
+    ],
+    [
+      { text: "❓ Support Chat", url: "https://t.me/support_chat" },
+      { text: "🐛 Report Issue", url: "https://example.com/issues" }
     ]
   ];
 
-  await sendPhotoMessage(BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK');
+  try {
+    // Try to send image with caption
+    await sendPhotoMessage(BOT_TOKEN, chatId, BOT_IMAGE_URL, message, buttons);
+  } catch (error) {
+    console.error("Image send failed, falling back to text:", error);
+    // Fallback to text message if image fails
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+  }
 }
 
+// Add this new function to send photo messages
+async function sendPhotoMessage(BOT_TOKEN, chatId, photoUrl, caption, buttons) {
+  try {
+    const payload = {
+      chat_id: chatId,
+      photo: photoUrl,
+      caption: caption,
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: buttons
+      }
+    };
+    
+    const response = await fetch(
+      `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const result = await response.json();
+    if (!result.ok) {
+      throw new Error(`Telegram API error: ${result.description}`);
+    }
+    return result;
+  } catch (error) {
+    console.error("Error sending photo message:", error);
+    throw error; // Rethrow to trigger fallback
+  }
+}
 
 async function sendToTelegram(payload, env) {
   // Get environment variables
@@ -508,30 +555,87 @@ async function checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID) {
   }
 }
 
-// Dedicated function for sending text messages
-async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
+async function sendTextMessage(BOT_TOKEN, chatId, message, buttons) {
   try {
+    // Validate required parameters
+    if (!BOT_TOKEN) throw new Error("Missing Telegram Bot Token");
+    if (!chatId) throw new Error("Missing chat ID");
+    if (!message) throw new Error("Message content is required");
+
+    // Prepare payload
     const payload = {
-      chat_id: CHANNEL_ID,
+      chat_id: chatId,
       text: message,
       parse_mode: "Markdown",
-      reply_markup: { inline_keyboard: buttons }
+      disable_web_page_preview: true,
+      reply_markup: { 
+        inline_keyboard: buttons || [] 
+      }
     };
     
-    const textResponse = await fetch(
+    // Send message to Telegram API
+    const response = await fetch(
       `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Connection': 'keep-alive'
+        },
+        body: JSON.stringify(payload),
+        cf: {
+          // Cloudflare-specific optimizations
+          cacheEverything: false,
+          cacheTtl: 1
+        }
       }
     );
 
-    const textResult = await textResponse.json();
-    if (textResult.ok) return "✅ Content posted to Telegram (text only)";
-    return `❌ Telegram error: ${textResult.description || 'Unknown error'}`;
-  } catch (e) {
-    return `❌ Network error: ${e.message}`;
+    // Handle API response
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Telegram API error ${response.status}: ${errorData.description || 'Unknown error'}`);
+    }
+
+    const result = await response.json();
+    
+    // Verify Telegram response
+    if (!result.ok) {
+      throw new Error(`Telegram error: ${result.description}`);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Text Message Error:", {
+      chatId,
+      message: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
+      error: error.message
+    });
+    
+    // Attempt to send error notification
+    try {
+      await fetch(
+        `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: `❌ Failed to send message: ${error.message.substring(0, 3000)}`,
+            parse_mode: "Markdown",
+            disable_notification: true
+          })
+        }
+      );
+    } catch (fallbackError) {
+      console.error("Fallback notification failed:", fallbackError.message);
+    }
+    
+    return {
+      ok: false,
+      error: error.message,
+      details: error.stack || "No stack trace"
+    };
   }
 }
 
