@@ -65,7 +65,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: tmdb-tg-post-font
+          PROJECT_NAME: imdb-tg-post-font
         run: |
           echo "Checking if Cloudflare Pages project '${PROJECT_NAME}' exists..."
           RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
@@ -88,7 +88,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: tmdb-tg-post-font
+          PROJECT_NAME: imdb-tg-post-font
         run: |
           echo "Creating Cloudflare Pages project '${PROJECT_NAME}'..."
           curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
@@ -110,6 +110,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: tmdb-tg-post-font
+          projectName: imdb-tg-post-font
           directory: ./public
           branch: main
