@@ -1,60 +1,71 @@
-deploy-worker:
-  name: 🚀 Deploy Cloudflare Worker
-  runs-on: ubuntu-latest
-  outputs:
-    worker-url: ${{ steps.deploy_worker.outputs.url }}
-  
-  steps:
-    - name: 📦 Checkout code
-      uses: actions/checkout@v4
+name: Deploy Worker & Frontend to Cloudflare ☁️🚀
 
-    - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
-    - name: 📥 Install Wrangler CLI
-      run: npm install -g wrangler@4
+jobs:
+  deploy-worker:
+    name: 🚀 Deploy Cloudflare Worker
+    runs-on: ubuntu-latest
+    outputs:
+      worker-url: ${{ steps.deploy_worker.outputs.url }}
+    
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
 
-    - name: 📝 Generate wrangler.toml with account_id
-      working-directory: worker
-      run: |
-        sed "s/__ACCOUNT_ID__/${{ secrets.CF_ACCOUNT_ID }}/g" wrangler.template.toml > wrangler.toml
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: 🔐 Set secrets and deploy worker
-      working-directory: worker
-      id: deploy_worker
-      env:
-        CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      run: |
-        echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | wrangler secret put TELEGRAM_BOT_TOKEN
-        echo "${{ secrets.TMDB_API_KEY }}" | wrangler secret put TMDB_API_KEY
-        echo "${{ secrets.AUTH_TOKEN }}" | wrangler secret put AUTH_TOKEN
-        
-        DEPLOY_OUTPUT=$(wrangler deploy)
-        echo "$DEPLOY_OUTPUT"
-        
-        WORKER_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | head -n1)
-        echo "Worker URL: $WORKER_URL"
-        echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
+      - name: 📥 Install Wrangler CLI
+        run: npm install -g wrangler@4
+
+      - name: 📝 Generate wrangler.toml with account_id
+        working-directory: worker
+        run: |
+          sed "s/__ACCOUNT_ID__/${{ secrets.CF_ACCOUNT_ID }}/g" wrangler.template.toml > wrangler.toml
+
+      - name: 🔐 Set secrets and deploy worker
+        working-directory: worker
+        id: deploy_worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          # Set secrets
+          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | wrangler secret put TELEGRAM_BOT_TOKEN
+          echo "${{ secrets.TMDB_API_KEY }}" | wrangler secret put TMDB_API_KEY
+          echo "${{ secrets.AUTH_TOKEN }}" | wrangler secret put AUTH_TOKEN
+          
+          # Deploy worker and capture output
+          DEPLOY_OUTPUT=$(wrangler deploy)
+          echo "$DEPLOY_OUTPUT"
+          
+          # Extract Worker URL
+          WORKER_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | head -n1)
+          echo "Worker URL: $WORKER_URL"
+          echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
 
   deploy-frontend:
     name: 🌐 Deploy Frontend to Cloudflare Pages
     needs: deploy-worker
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
-  
+
       - name: 📝 Inject Worker URL
         run: |
           sed -i "s|const workerUrl = '.*';|const workerUrl = '${{ needs.deploy-worker.outputs.worker-url }}';|g" public/script.js
-  
+
       - name: 📝 Inject Auth Token
         run: |
           sed -i "s|const AUTH_TOKEN = '.*';|const AUTH_TOKEN = '${{ secrets.AUTH_TOKEN }}';|g" public/script.js
-        
+
       - name: 🔍 Check if Pages project exists
         id: check_pages
         env:
