@@ -464,9 +464,13 @@ async function handlePost() {
     // Handle special admin errors
     if (responseData.result.includes('Bot is not in your channel') || 
         responseData.result.includes('not an admin')) {
+      // Extract bot username from the error message
+      const botUsernameMatch = responseData.result.match(/@(\w+)/);
+      const botUsername = botUsernameMatch ? botUsernameMatch[0] : 'your_bot';
+      
       createBotAdminPopup({
         message: responseData.result,
-        botUsername: responseData.botUsername || 'your_bot_username'
+        botUsername: botUsername
       });
     }
     
@@ -477,9 +481,9 @@ async function handlePost() {
 }
 
 function createBotAdminPopup(errorData) {
-  // Use the botUsername from errorData, or a fallback if not provided
-  const botUsername = errorData.botUsername || 'your_bot_username';
-
+  // Ensure we have a valid bot username
+  const botUsername = errorData.botUsername || 'your_bot';
+  
   const popup = document.createElement('div');
   popup.className = 'status-popup error';
   
@@ -492,14 +496,14 @@ function createBotAdminPopup(errorData) {
         <p>Please follow these steps:</p>
         <ol>
           <li>Add bot to your channel: 
-            <a href="https://t.me/${botUsername}" 
+            <a href="https://t.me/${botUsername.replace('@', '')}" 
                target="_blank" 
                class="bot-link">
-              @${botUsername}
+              ${botUsername}
             </a>
           </li>
           <li>Go to Channel Info > Administrators > Add Admin</li>
-          <li>Search for <strong>@${botUsername}</strong></li>
+          <li>Search for <strong>${botUsername}</strong></li>
           <li>Grant <strong>"Post Messages"</strong> permission</li>
           <li>Make sure to click <strong>"Save"</strong></li>
         </ol>
