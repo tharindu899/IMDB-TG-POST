@@ -74,7 +74,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: tmdb-send-frontend
+          PROJECT_NAME: imdb-tg-post-font
         run: |
           echo "Creating Cloudflare Pages project '${PROJECT_NAME}'..."
           curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
@@ -96,6 +96,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: tmdb-send-frontend
+          projectName: imdb-tg-post-font
           directory: ./public
           branch: main
