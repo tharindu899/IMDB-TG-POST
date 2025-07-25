@@ -451,44 +451,53 @@ async function handlePost() {
       updateStatus(responseData.result, 'success');
     }
     
+        // Update status based on worker response
     let resultMessage = responseData.result;
     
     // Add special handling for admin errors
-    if (resultMessage.includes('Bot is not an admin')) {
-      // Create a more user-friendly message with instructions
-      const botUsername = resultMessage.match(/@(\w+)/)?.[0] || 'your bot';
+    if (resultMessage.includes('Bot is not in your channel') || 
+        resultMessage.includes('not an admin')) {
+      // Extract bot username from message
+      const botMatch = resultMessage.match(/@(\w+)/);
+      const botUsername = botMatch ? botMatch[0] : 'your bot';
       
-      statusPopupContainer.innerHTML = `
-        <div class="status-popup error">
-          <div class="status-popup-content">
-            <div class="status-icon">❌</div>
-            <div class="status-text">
-              <strong>Admin Required!</strong>
-              <p>Please add ${botUsername} to your channel as an admin:</p>
-              <ol>
-                <li>Open your Telegram channel</li>
-                <li>Go to Channel Info > Administrators</li>
-                <li>Add ${botUsername}</li>
-                <li>Grant "Post Messages" permission</li>
-                <li>Try posting again</li>
-              </ol>
-            </div>
+      // Create persistent error popup
+      const popup = document.createElement('div');
+      popup.className = 'status-popup error';
+      
+      popup.innerHTML = `
+        <div class="status-popup-content">
+          <div class="status-icon">❌</div>
+          <div class="status-text">
+            <strong>Bot Setup Required!</strong>
+            <p>${resultMessage}</p>
+            <p>Please follow these steps:</p>
+            <ol>
+              <li>Open your Telegram channel</li>
+              <li>Go to Channel Info > Administrators > Add Admin</li>
+              <li>Search for ${botUsername}</li>
+              <li>Grant <strong>"Post Messages"</strong> permission</li>
+              <li>Make sure to click <strong>"Save"</strong></li>
+            </ol>
+            <p class="try-again">Try posting again after adding the bot</p>
           </div>
+          <button class="close-popup">×</button>
         </div>
       `;
       
-      // Make popup persistent until dismissed
-      const popup = statusPopupContainer.firstChild;
-      popup.classList.add('show');
+      // Clear existing popups
+      statusPopupContainer.innerHTML = '';
+      statusPopupContainer.appendChild(popup);
       
-      // Add close button
-      const closeBtn = document.createElement('button');
-      closeBtn.textContent = '×';
-      closeBtn.className = 'close-popup';
-      closeBtn.addEventListener('click', () => {
+      // Add close functionality
+      popup.querySelector('.close-popup').addEventListener('click', () => {
         statusPopupContainer.removeChild(popup);
       });
-      popup.appendChild(closeBtn);
+      
+      // Show immediately
+      setTimeout(() => {
+        popup.classList.add('show');
+      }, 10);
       
       return;
     }
