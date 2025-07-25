@@ -1,0 +1,101 @@
+name: Deploy Worker & Frontend to Cloudflare ☁️🚀
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-worker:
+    name: 🚀 Deploy Cloudflare Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Install Wrangler CLI
+        run: npm install -g wrangler@4
+
+      - name: 📝 Generate wrangler.toml with account_id
+        working-directory: worker
+        run: |
+          sed "s/__ACCOUNT_ID__/${{ secrets.CF_ACCOUNT_ID }}/g" wrangler.template.toml > wrangler.toml
+
+      - name: 🔐 Set secrets and deploy worker
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | wrangler secret put TELEGRAM_BOT_TOKEN
+          echo "${{ secrets.TELEGRAM_CHANNEL_ID }}" | wrangler secret put TELEGRAM_CHANNEL_ID
+          echo "${{ secrets.TMDB_API_KEY }}" | wrangler secret put TMDB_API_KEY
+          wrangler deploy
+
+  deploy-frontend:
+    name: 🌐 Deploy Frontend to Cloudflare Pages
+    needs: deploy-worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check if Pages project exists
+        id: check_pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          PROJECT_NAME: tmdb-send-frontend
+        run: |
+          echo "Checking if Cloudflare Pages project '${PROJECT_NAME}' exists..."
+          RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          # Check if project exists in list
+          EXISTS=$(echo "$RESPONSE" | jq -r --arg NAME "$PROJECT_NAME" '.result[] | select(.name == $NAME) | .name')
+
+          if [ "$EXISTS" = "$PROJECT_NAME" ]; then
+            echo "Project exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Project does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚧 Create Pages project if not exists
+        if: steps.check_pages.outputs.exists == 'false'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          PROJECT_NAME: tmdb-send-frontend
+        run: |
+          echo "Creating Cloudflare Pages project '${PROJECT_NAME}'..."
+          curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{
+              "name": "'"${PROJECT_NAME}"'",
+              "production_branch": "main",
+              "build_config": {
+                "build_command": "",
+                "destination_dir": "public"
+              }
+            }'
+          echo "Project created. Waiting for propagation..."
+          sleep 30  # Allow time for project initialization
+
+      - name: 🔧 Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: tmdb-send-frontend
+          directory: ./public
+          branch: main
