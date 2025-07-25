@@ -238,6 +238,8 @@ function populateCustomDropdown() {
 }
 
 // Handle search
+// ... existing code ...
+
 async function handleSearch() {
   const title = searchInput.value.trim();
   
@@ -279,27 +281,13 @@ async function handleSearch() {
     // Populate custom dropdown
     populateCustomDropdown();
 
-    // Select first result automatically
-    if (searchResults.length > 0) {
-      // Set both the native select and custom dropdown
-      resultSelect.value = "0";
-      
-      // Update custom dropdown to show the selected item
-      const customSelect = document.querySelector('.custom-select');
-      const selectedText = document.querySelector('.selected-text');
-      if (selectedText) {
-        selectedText.textContent = resultSelect.options[1].textContent; // [0] is placeholder, [1] is first result
-      }
-      
-      // Trigger change event to update preview
-      resultSelect.dispatchEvent(new Event('change'));
-    }
-
     updateStatus(`✅ Found ${searchResults.length} results`, 'success');
   } catch (error) {
     updateStatus(`❌ Error: ${error.message}`, 'error');
   }
 }
+
+// ... existing code ...
 
 // Format dropdown option text
 function formatDropdownOption(result) {
