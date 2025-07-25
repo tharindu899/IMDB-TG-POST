@@ -33,9 +33,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
           echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | wrangler secret put TELEGRAM_BOT_TOKEN
-          echo "${{ secrets.TELEGRAM_CHANNEL_ID }}" | wrangler secret put TELEGRAM_CHANNEL_ID
           echo "${{ secrets.TMDB_API_KEY }}" | wrangler secret put TMDB_API_KEY
+          echo "${{ secrets.AUTH_TOKEN }}" | wrangler secret put AUTH_TOKEN
           wrangler deploy
+          
+      - name: 🔗 Get Worker URL
+        id: worker_url
+        run: |
+          WORKER_URL=$(wrangler deployment list | grep -o 'https://[^ ]*' | head -n1)
+          echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
 
   deploy-frontend:
     name: 🌐 Deploy Frontend to Cloudflare Pages
@@ -46,12 +52,20 @@ jobs:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
 
+      - name: 📝 Inject Worker URL
+        run: |
+          sed -i "s|const workerUrl = '.*';|const workerUrl = '${{ needs.deploy-worker.outputs.worker_url }}';|g" public/script.js
+
+      - name: 📝 Inject Auth Token
+        run: |
+          sed -i "s|const AUTH_TOKEN = '.*';|const AUTH_TOKEN = '${{ secrets.AUTH_TOKEN }}';|g" public/script.js
+
       - name: 🔍 Check if Pages project exists
         id: check_pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: tmdb-send-frontend
+          PROJECT_NAME: tmdb-tg-post-font
         run: |
           echo "Checking if Cloudflare Pages project '${PROJECT_NAME}' exists..."
           RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
@@ -74,7 +88,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: imdb-tg-post-font
+          PROJECT_NAME: tmdb-tg-post-font
         run: |
           echo "Creating Cloudflare Pages project '${PROJECT_NAME}'..."
           curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
@@ -96,6 +110,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: imdb-tg-post-font
+          projectName: tmdb-tg-post-font
           directory: ./public
           branch: main
