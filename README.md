@@ -2,138 +2,162 @@
 
 Automatically post movies and TV shows to Telegram channels with rich media previews.
 
-## 🌟 Features
-- Search TMDB database
-- Preview content details
-- Customize with episode info, notes & links
-- Post directly to Telegram channels
-- Multi-user support with channel settings
-- Responsive modern UI
+## 🔧 Full Setup Instructions
 
-## 🔧 Setup Instructions
+### 1. Prerequisites
+- **Cloudflare Account**: Required for Workers and Pages
+- **GitHub Account**: For repository hosting and CI/CD
+- **Telegram Account**: For bot and channel creation
+- **TMDB Account**: For API access
 
-### 1. Environment Setup
-Create a `.dev.vars` file in the worker directory with:
-```ini
-TELEGRAM_BOT_TOKEN="your_bot_token"
-TMDB_API_KEY="your_tmdb_api_key"
-AUTH_TOKEN="your_secure_random_token"
-```
+### 2. Cloudflare Account Setup
+1. Create Cloudflare account at [cloudflare.com](https://dash.cloudflare.com/sign-up)
+2. Verify your email address
+3. Add a payment method (required for Workers beyond free tier)
 
-Generate a secure token with:
+### 3. Cloudflare API Token Permissions
+Create API token with these permissions:
+1. Go to [API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+2. Click "Create Token"
+3. Use "Edit Cloudflare Workers" template
+4. Add these additional permissions:
+   - **Account**: Workers KV Storage: Edit
+   - **Account**: Workers Scripts: Edit
+   - **Account**: Workers Tail: Read
+   - **Account**: Cloudflare Pages: Edit
+   - **Zone**: Cache Purge: Purge
+5. Limit token to specific resources:
+   - Include: All accounts
+   - Include: Specific zone (your domain if using custom domain)
+6. Save token securely (will be used in GitHub Secrets)
+
+### 4. Clone Repository
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+git clone https://github.com/your-username/imdb-tg-post.git
+cd imdb-tg-post
 ```
 
-### 2. Create Telegram Bot
-1. Start a chat with [@BotFather](https://t.me/BotFather)
-2. Use `/newbot` command to create a bot
-3. Save the API token provided
+### 5. Backend Setup (Cloudflare Worker)
+1. Create new Worker:
+   - Go to [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages)
+   - Click "Create application"
+   - Choose "Create Worker"
+   - Name: `imdb-tg-post-back`
 
-### 3. Configure Telegram Channel
-1. Create a Telegram channel
-2. Add your bot as administrator with "Post Messages" permission
-3. Note your channel ID:
-   - For public channels: `@channelname`
-   - For private channels: 
-     - Forward a message from channel to `@RawDataBot`
-     - Look for "Forwarded from chat" ID
+2. Set environment variables:
+   - Go to Worker → Settings → Variables
+   - Add these variables under "Environment Variables":
+     - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token
+     - `TMDB_API_KEY`: Your TMDB API key
+     - `AUTH_TOKEN`: Generated secure token (`openssl rand -hex 32`)
+   - Add under "Secrets":
+     - Repeat same variables as secrets
 
-### 4. Get TMDB API Key
-1. Create account at [TMDB](https://www.themoviedb.org)
-2. Go to [API Settings](https://www.themoviedb.org/settings/api)
-3. Create new API key (choose "Developer" type)
+### 6. Frontend Configuration
+Edit `public/script.js`:
+```javascript
+// ======= REQUIRED CONFIGURATION ======= //
+const workerUrl = 'https://your-worker.your-username.workers.dev';
+const AUTH_TOKEN = 'same-as-worker-auth-token';
+// ===================================== //
+```
 
-### 5. Deployment
-#### Option 1: Manual Deployment
-1. Deploy worker to Cloudflare Workers:
+### 7. Telegram Configuration
+1. Create bot with [@BotFather](https://t.me/BotFather):
+   ```text
+   /newbot
+   Bot name: MyContentBot
+   Username: MyContentBot
+   ```
+2. Save API token
+3. Create channel and add bot as admin with:
+   - "Post messages" permission
+   - "Edit messages" permission (recommended)
+
+4. Set webhook:
 ```bash
-cd worker
-wrangler deploy
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://your-worker.your-username.workers.dev/bot"}' \
+  "https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook"
 ```
 
-2. Deploy frontend to any static hosting:
+### 8. GitHub Secrets Configuration
+Set these in repo → Settings → Secrets → Actions:
+| Secret Name          | Value                                  |
+|----------------------|----------------------------------------|
+| `CF_API_TOKEN`       | Cloudflare API token with permissions  |
+| `CF_ACCOUNT_ID`      | Cloudflare account ID                  |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token                     |
+| `TMDB_API_KEY`       | TMDB API key                           |
+| `AUTH_TOKEN`         | Same token as in worker                |
+
+### 9. Deploy via GitHub Actions
+1. Push to main branch:
 ```bash
-cd frontend
-npm run build
-# Upload build directory to hosting
+git add .
+git commit -m "Initial setup"
+git push origin main
 ```
+2. Monitor deployment in GitHub → Actions
 
-#### Option 2: Automated Deployment
-Set these GitHub Secrets:
-```ini
-TELEGRAM_BOT_TOKEN
-TMDB_API_KEY
-AUTH_TOKEN
-CF_API_TOKEN
-CF_ACCOUNT_ID
-```
+### 10. Final Configuration
+1. Access frontend: `https://your-project.pages.dev`
+2. Open settings (⚙️) and enter:
+   - Telegram Channel ID
+   - (Optional) Default custom domain
+3. Save settings
 
-Push to main branch to trigger deployment.
+## 🔒 Required Cloudflare Permissions
+For the API token, these permissions are required:
+
+| Service           | Permission | Reason |
+|-------------------|------------|--------|
+| Account Settings  | Read       | Access account info |
+| Cloudflare Pages  | Edit       | Deploy frontend |
+| Workers Scripts   | Edit       | Deploy worker |
+| Workers Secrets   | Edit       | Set environment variables |
+| Workers KV Storage| Edit       | Future feature support |
+| Zone Cache Purge  | Purge      | Clear cache after deploy |
 
 ## 🚀 Usage Guide
-
-### 1. Access the App
-Open the deployed frontend URL in your browser.
-
-### 2. Configure Channel
-1. Click ⚙️ Settings button
-2. Enter your Telegram Channel ID
-3. Click "Save Settings"
-
-### 3. Post Content
-1. Search for a movie or TV show
-2. Select from results
-3. Add optional details:
+1. **Search Content**: Type movie/TV show title
+2. **Select Result**: Choose from TMDB results
+3. **Add Details** (optional):
    - Season/Episode numbers
    - Custom link
    - Personal note
-4. Click "Post to Telegram"
-
-## 🔒 Security Features
-- Bearer token authentication for API
-- Secrets encryption in transit
-- Local storage for user settings
-- CORS protection
-- Secure token generation
-
-## 📂 File Structure
-```
-cinemahub/
-├── worker/
-│   ├── worker.js          # Cloudflare worker code
-│   └── .dev.vars          # Environment variables
-├── public/
-│   ├── index.html         # Main application
-│   ├── script.js          # Client-side logic
-│   └── style.css          # Styling
-└── README.md              # This documentation
-```
-
-## 🤖 Telegram Message Format
-Messages will include:
-- Rich media preview (poster image)
-- Title, year, and rating
-- Content type and language
-- Genre information
-- Truncated plot with "Read more" link
-- Custom buttons:
-  - "Watch Here" (custom link)
-  - IMDb page (when available)
-  - Trailer link (when available)
+4. **Post to Telegram**: Click submit button
 
 ## ⚠️ Troubleshooting
-**Problem:** Messages not posting  
-**Solution:** Verify bot has admin permissions in channel
+**Deployment Fails:**
+- Verify Cloudflare API token permissions
+- Check account limits (free tier has daily limits)
+- Ensure secrets are correctly set in GitHub
 
-**Problem:** "Unauthorized" error  
-**Solution:** Ensure correct AUTH_TOKEN is set in worker and frontend
+**Telegram Issues:**
+- Check bot is channel admin: `/admin` in channel
+- Verify webhook: `https://api.telegram.org/botYOUR_TOKEN/getWebhookInfo`
+- Test bot commands in private chat
 
-**Problem:** Images not showing  
-**Solution:** Check TMDB API key validity and network access
+**TMDB Errors:**
+- Validate API key at TMDB
+- Check worker logs for failed requests
+- Ensure worker has internet access
 
-**Problem:** "Channel ID not set"  
-**Solution:** Configure channel ID in settings modal
+## 📂 Project Structure
+```
+imdb-tg-post/
+├── worker/            # Cloudflare Worker
+│   ├── worker.js      # Backend logic
+│   └── wrangler.toml  # Deployment config
+├── public/            # Frontend
+│   ├── index.html     # Main UI
+│   ├── script.js      # Client logic (configure here)
+│   └── style.css      # Styles
+└── .github/workflows  # CI/CD
+    └── deploy.yml     # Deployment workflow
+```
 
 ## 📜 License
 MIT License - Free for personal and commercial use
