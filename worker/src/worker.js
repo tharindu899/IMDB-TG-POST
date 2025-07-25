@@ -1,36 +1,63 @@
 const handleCors = (response) => {
   response.headers.set('Access-Control-Allow-Origin', '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   return response;
 };
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') {
-      return handleCors(new Response(null, { status: 204 }));
-    }
-    
-    if (request.method !== 'POST') {
-      return handleCors(
-        new Response(JSON.stringify({ error: 'Method not allowed' }), {
-          status: 405,
-          headers: { 'Content-Type': 'application/json' }
-        })
-      );
-    }
-
     try {
-      const payload = await request.json();
-      const result = await sendToTelegram(payload, env);
-      return handleCors(
-        new Response(JSON.stringify({ result }), {
-          headers: { 'Content-Type': 'application/json' }
-        })
-      );
+      // Handle CORS preflight
+      if (request.method === 'OPTIONS') {
+        return handleCors(new Response(null, { status: 204 }));
+      }
+
+      // Verify authorization header
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || authHeader !== `Bearer ${env.AUTH_TOKEN}`) {
+        return handleCors(
+          new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        );
+      }
+
+      if (request.method !== 'POST') {
+        return handleCors(
+          new Response(JSON.stringify({ error: 'Method not allowed' }), {
+            status: 405,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        );
+      }
+
+      try {
+        const payload = await request.json();
+        const result = await sendToTelegram(payload, env);
+        return handleCors(
+          new Response(JSON.stringify({ result }), {
+            headers: { 'Content-Type': 'application/json' }
+          })
+        );
+      } catch (error) {
+        return handleCors(
+          new Response(JSON.stringify({ 
+            error: 'Bad request',
+            message: error.message 
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          })
+        );
+      }
     } catch (error) {
       return handleCors(
-        new Response(JSON.stringify({ error: error.message }), {
+        new Response(JSON.stringify({ 
+          error: 'Internal server error',
+          details: error.message 
+        }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }
         })
@@ -60,7 +87,7 @@ async function sendToTelegram(payload, env) {
     episode, 
     custom_link, 
     note,
-    channel_id  // Added channel_id from UI settings
+    channel_id
   } = payload;
   
   // Use channel ID from payload if provided
