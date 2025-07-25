@@ -1,5 +1,5 @@
 // Update worker URL with your actual Telegram bot endpoint
-const workerUrl = 'https://tmdb-send-back.tharindu311.workers.dev'; // REPLACE WITH YOUR WORKER URL
+const workerUrl = 'https://imdb-tg-post-back.tharindu311.workers.dev'; // REPLACE WITH YOUR WORKER URL
 const AUTH_TOKEN = '0c17ff1698bcb57e6009ba921cfdd1e1b0e98976556325ea9713c3f7f9682e99'; // WILL_BE_REPLACED_BY_WORKFLOW
 let searchResults = [];
 let selectedContent = null;
