@@ -421,11 +421,18 @@ async function handlePost() {
 
     // Handle non-JSON responses
     const responseText = await response.text();
+       // Handle JSON responses from worker
     let responseData;
     try {
       responseData = JSON.parse(responseText);
     } catch (e) {
       throw new Error(`Invalid server response: ${responseText.slice(0, 100)}`);
+    }
+
+    // Handle bot admin errors
+    if (responseData.type === 'bot_admin_error') {
+      createBotAdminPopup(responseData);
+      return;
     }
 
     if (!response.ok) {
@@ -506,6 +513,51 @@ async function handlePost() {
     updateStatus(`❌ Error: ${error.message}`, 'error');
     console.error('Posting error:', error);
   }
+}
+
+function createBotAdminPopup(errorData) {
+  const popup = document.createElement('div');
+  popup.className = 'status-popup error';
+  
+  popup.innerHTML = `
+    <div class="status-popup-content">
+      <div class="status-icon">❌</div>
+      <div class="status-text">
+        <strong>Bot Setup Required!</strong>
+        <p>${errorData.message}</p>
+        <p>Please follow these steps:</p>
+        <ol>
+          <li>Add bot to your channel: 
+            <a href="https://t.me/${errorData.botUsername}" 
+               target="_blank" 
+               class="bot-link">
+              @${errorData.botUsername}
+            </a>
+          </li>
+          <li>Go to Channel Info > Administrators > Add Admin</li>
+          <li>Search for <strong>@${errorData.botUsername}</strong></li>
+          <li>Grant <strong>"Post Messages"</strong> permission</li>
+          <li>Make sure to click <strong>"Save"</strong></li>
+        </ol>
+        <div class="try-again">Try posting again after adding the bot</div>
+      </div>
+      <button class="close-popup">×</button>
+    </div>
+  `;
+  
+  // Clear existing popups
+  statusPopupContainer.innerHTML = '';
+  statusPopupContainer.appendChild(popup);
+  
+  // Add close functionality
+  popup.querySelector('.close-popup').addEventListener('click', () => {
+    statusPopupContainer.removeChild(popup);
+  });
+  
+  // Show immediately
+  setTimeout(() => {
+    popup.classList.add('show');
+  }, 10);
 }
 
 // Update status with popup
