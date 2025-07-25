@@ -74,7 +74,7 @@ const AUTH_TOKEN = 'same-as-worker-auth-token';
    - "Post messages" permission
    - "Edit messages" permission (recommended)
 
-4. Set webhook:
+4. Set webhook: use terminal (termux)
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
@@ -148,13 +148,17 @@ For the API token, these permissions are required:
 ## 📂 Project Structure
 ```
 imdb-tg-post/
+├── README.md
+├── .gitignore
 ├── worker/            # Cloudflare Worker
-│   ├── worker.js      # Backend logic
-│   └── wrangler.toml  # Deployment config
+│    ├── src
+│    │     └── worker.js      # Backend logic
+│    ├── package.json
+│    └── wrangler.toml  # Deployment config
 ├── public/            # Frontend
-│   ├── index.html     # Main UI
-│   ├── script.js      # Client logic (configure here)
-│   └── style.css      # Styles
+│    ├── index.html     # Main UI
+│    ├── script.js      # Client logic (configure here)
+│    └── style.css      # Styles
 └── .github/workflows  # CI/CD
     └── deploy.yml     # Deployment workflow
 ```
