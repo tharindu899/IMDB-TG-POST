@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Deploy Worker & Frontend to Cloudflare ☁️🚀
 
 on:
@@ -26,10 +25,9 @@ jobs:
       - name: 🔑 Generate AUTH_TOKEN
         id: gen_token
         run: |
-          # generate 32 random bytes → 64 hex chars
-          TOKEN=$(openssl rand -hex 32)
-          echo "Generated token: $TOKEN"
-          # use environment file instead of deprecated set-output
+          # Generate token without newline
+          TOKEN=$(openssl rand -hex 32 | tr -d '\n')
+          echo "Generated token: ${TOKEN:0:5}..."  # Partial for security
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: 📥 Install Wrangler CLI
@@ -49,18 +47,17 @@ jobs:
           TMDB_API_KEY:         ${{ secrets.TMDB_API_KEY }}
           AUTH_TOKEN:           ${{ steps.gen_token.outputs.token }}
         run: |
-          # Push secrets into Worker
-          echo "${TELEGRAM_BOT_TOKEN}" | wrangler secret put TELEGRAM_BOT_TOKEN
-          echo "${TMDB_API_KEY}"       | wrangler secret put TMDB_API_KEY
-          echo "${AUTH_TOKEN}"         | wrangler secret put AUTH_TOKEN
-
-          # Deploy worker and capture output
+          # Push secrets without newlines
+          echo -n "$TELEGRAM_BOT_TOKEN" | wrangler secret put TELEGRAM_BOT_TOKEN
+          echo -n "$TMDB_API_KEY" | wrangler secret put TMDB_API_KEY
+          echo -n "$AUTH_TOKEN" | wrangler secret put AUTH_TOKEN
+          
+          # Deploy worker
           DEPLOY_OUTPUT=$(wrangler deploy)
           echo "$DEPLOY_OUTPUT"
-
+          
           # Extract Worker URL
           WORKER_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | head -n1)
-          # use environment file instead of deprecated set-output
           echo "url=$WORKER_URL" >> "$GITHUB_OUTPUT"
 
   deploy-frontend:
@@ -74,44 +71,27 @@ jobs:
 
       - name: 📝 Inject Worker URL
         run: |
-          sed -i "s|__WORKER_URL__|${{ needs.deploy-worker.outputs.worker-url }}|g" .public/script.js
+          WORKER_URL="${{ needs.deploy-worker.outputs.worker-url }}"
+          sed -i "s|__WORKER_URL__|$WORKER_URL|g" public/script.js
+          echo "Worker URL injected: ${WORKER_URL:0:20}..."
 
       - name: 📝 Inject Auth Token
         run: |
-          sed -i "s|__AUTH_TOKEN__|${{ needs.deploy-worker.outputs.auth-token }}|g" .public/script.js
+          AUTH_TOKEN="${{ needs.deploy-worker.outputs.auth-token }}"
+          sed -i "s|__AUTH_TOKEN__|$AUTH_TOKEN|g" public/script.js
+          echo "Token injected: ${AUTH_TOKEN:0:5}..."
 
-      - name: 🔍 Check if Pages project exists
-        id: check_pages
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: imdb-tg-post-font
+      - name: 🔍 Verify replacements
         run: |
-          RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json")
-          EXISTS=$(echo "$RESPONSE" | jq -r --arg NAME "$PROJECT_NAME" '.result[] | select(.name == $NAME) | .name')
-          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
-
-      - name: 🚧 Create Pages project if not exists
-        if: steps.check_pages.outputs.exists == 'false'
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          PROJECT_NAME: imdb-tg-post-font
-        run: |
-          curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{
-              "name": "'"${PROJECT_NAME}"'",
-              "production_branch": "main",
-              "build_config": {
-                "build_command": "",
-                "destination_dir": "public"
-              }
-            }'
-          sleep 30
+          if grep -q "__WORKER_URL__" public/script.js; then
+            echo "❌ Worker URL replacement failed!"
+            exit 1
+          fi
+          if grep -q "__AUTH_TOKEN__" public/script.js; then
+            echo "❌ Token replacement failed!"
+            exit 1
+          fi
+          echo "✅ Replacements verified"
 
       - name: 🔧 Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@1
