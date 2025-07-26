@@ -74,11 +74,11 @@ jobs:
 
       - name: 📝 Inject Worker URL
         run: |
-          sed -i "s|__WORKER_URL__|${{ needs.deploy-worker.outputs.worker-url }}|g" public/script.js
+          sed -i "s|__WORKER_URL__|${{ needs.deploy-worker.outputs.worker-url }}|g" .public/script.js
 
       - name: 📝 Inject Auth Token
         run: |
-          sed -i "s|__AUTH_TOKEN__|${{ needs.deploy-worker.outputs.auth-token }}|g" public/script.js
+          sed -i "s|__AUTH_TOKEN__|${{ needs.deploy-worker.outputs.auth-token }}|g" .public/script.js
 
       - name: 🔍 Check if Pages project exists
         id: check_pages
