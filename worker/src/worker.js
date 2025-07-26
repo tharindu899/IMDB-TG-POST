@@ -22,9 +22,20 @@ export default {
 
       // Verify authorization header
       const authHeader = request.headers.get('Authorization');
-      if (!authHeader || authHeader !== `Bearer ${env.AUTH_TOKEN}`) {
+      const expectedToken = `Bearer ${env.AUTH_TOKEN}`;
+      
+      // Debug logging
+      console.log('Expected token:', expectedToken);
+      console.log('Received header:', authHeader);
+      
+      if (!authHeader || authHeader !== expectedToken) {
         return handleCors(
-          new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          new Response(JSON.stringify({ 
+            error: 'Unauthorized',
+            message: 'Token mismatch',
+            expected: expectedToken.substring(0, 5) + '...',
+            received: authHeader ? authHeader.substring(0, 5) + '...' : 'none'
+          }), {
             status: 401,
             headers: { 'Content-Type': 'application/json' }
           })
@@ -72,7 +83,6 @@ export default {
     }
   }
 }
-
 
 // New function to handle bot commands
 async function handleBotCommand(request, env) {
@@ -137,10 +147,6 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
       { text: "🎥 Tutorial",
         url: "https://example.com/tutorial" }
     ],
-//     [
-//       { text: "🛠️ Setup",
-//         url: "https://t.me/flixora_site" }
-//     ],
     [
       { text: "❓ Support",
         url: "https://t.me/SLtharindu1" },
@@ -168,7 +174,7 @@ async function sendToTelegram(payload, env) {
   
   // Extract payload data
   const { 
-    tmdb_id, 
+    tmdb_id,
     media_type,
     season, 
     episode, 
@@ -176,21 +182,6 @@ async function sendToTelegram(payload, env) {
     note,
     channel_id
   } = payload;
-
-  // Validate TMDB ID
-  if (!tmdb_id || !media_type) {
-    return "❌ Missing TMDB ID or media type";
-  }
-
-  // Get details DIRECTLY using ID
-  // const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
-//   const detailsResponse = await fetch(detailsUrl);
-//   const details = await detailsResponse.json();
-
-  // Handle invalid ID
-  if (details.status_code === 34) {
-    return "❌ Invalid TMDB ID";
-  }
   
   // Use channel ID from payload if provided
   const CHANNEL_ID = channel_id || env.TELEGRAM_CHANNEL_ID;
@@ -198,25 +189,52 @@ async function sendToTelegram(payload, env) {
   if (!CHANNEL_ID) {
     throw new Error('Missing Telegram Channel ID');
   }
-
-  // Search TMDB
-  const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`;
-  const searchResponse = await fetch(searchUrl);
-  const searchData = await searchResponse.json();
-
-  if (!searchData.results || searchData.results.length === 0) {
-    return "❌ Content not found on TMDB";
+  
+  if (!tmdb_id || !media_type) {
+    throw new Error('Missing TMDB ID or media type');
   }
 
-  // Validate choice index
-  const choiceIdx = parseInt(choice_idx);
-  if (isNaN(choiceIdx)) {
-    return "❌ Invalid choice index";
+  // Get full details directly using ID
+  const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
+  const detailsResponse = await fetch(detailsUrl);
+  const details = await detailsResponse.json();
+
+  // Handle invalid ID
+  if (details.status_code === 34) {
+    return "❌ Invalid TMDB ID";
   }
 
-  if (choiceIdx < 0 || choiceIdx >= searchData.results.length) {
-    return "❌ Choice index out of range";
+  // Get external IDs
+  let imdbId = null;
+  try {
+    const externalIdsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/external_ids?api_key=${TMDB_API_KEY}`;
+    const externalResponse = await fetch(externalIdsUrl);
+    const externalIds = await externalResponse.json();
+    imdbId = externalIds.imdb_id;
+  } catch (error) {
+    console.error("Failed to fetch external IDs:", error);
   }
+
+  // Fetch videos for trailer
+  let trailerKey = null;
+  try {
+    const videosUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/videos?api_key=${TMDB_API_KEY}`;
+    const videosResponse = await fetch(videosUrl);
+    const videosData = await videosResponse.json();
+    
+    if (videosData.results?.length > 0) {
+      const trailer = videosData.results.find(
+        v => v.site === "YouTube" && v.type === "Trailer"
+      );
+      if (trailer) trailerKey = trailer.key;
+    }
+  } catch (error) {
+    console.error("Failed to fetch videos:", error);
+  }
+
+  // Prepare content details
+  const isSeries = media_type === 'tv';
+  const contentTitle = isSeries ? details.name : details.title;
   
   function getLanguageInfo(code) {
     const languages = {
@@ -238,48 +256,7 @@ async function sendToTelegram(payload, env) {
     const lang = languages[code];
     return lang ? `${lang.flag} ${lang.name}` : `🌐 Unknown`;
   }
-
-  // Get selected result
-  const selected = searchData.results[choiceIdx];
-  const mediaType = selected.media_type;
-  const tmdbId = selected.id;
-
-  // Get full details
-  const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}`;
-  const detailsResponse = await fetch(detailsUrl);
-  const details = await detailsResponse.json();
-
-  // Get external IDs
-  let imdbId = null;
-  try {
-    const externalIdsUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${TMDB_API_KEY}`;
-    const externalResponse = await fetch(externalIdsUrl);
-    const externalIds = await externalResponse.json();
-    imdbId = externalIds.imdb_id;
-  } catch (error) {
-    console.error("Failed to fetch external IDs:", error);
-  }
-
-  // Fetch videos for trailer
-  let trailerKey = null;
-  try {
-    const videosUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}`;
-    const videosResponse = await fetch(videosUrl);
-    const videosData = await videosResponse.json();
-    
-    if (videosData.results?.length > 0) {
-      const trailer = videosData.results.find(
-        v => v.site === "YouTube" && v.type === "Trailer"
-      );
-      if (trailer) trailerKey = trailer.key;
-    }
-  } catch (error) {
-    console.error("Failed to fetch videos:", error);
-  }
-
-  // Prepare content details
-  const isSeries = mediaType === 'tv';
-  const contentTitle = isSeries ? details.name : details.title;
+  
   const languageInfo = getLanguageInfo(details.original_language);
   const year = isSeries 
     ? (details.first_air_date?.split('-')[0] || 'N/A')
@@ -325,7 +302,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 ⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
 🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 *Plot:* ${truncatePlot(details.overview, mediaType, tmdbId)}
+📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
   // Add note if provided
@@ -354,7 +331,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   if (!imdbButton && !siteLink) {
     buttons.push([{ 
       text: "ℹ️ TMDB Page", 
-      url: `https://www.themoviedb.org/${mediaType}/${tmdbId}`
+      url: `https://www.themoviedb.org/${media_type}/${tmdb_id}`
     }]);
   }
 
@@ -384,7 +361,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   }
   
   // 4. Fallback to TMDB API image
-  posterSources.push(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/images?api_key=${TMDB_API_KEY}`);
+  posterSources.push(`https://api.themoviedb.org/3/${media_type}/${tmdb_id}/images?api_key=${TMDB_API_KEY}`);
 
   // Try all poster sources in sequence
   let lastError = null;
@@ -452,8 +429,8 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
       // Continue to next source
     }
   }
-  
-// Verify bot is admin in channel
+
+  // Verify bot is admin in channel
   const botStatus = await checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID);
   if (botStatus.error) {
     return botStatus.message;
@@ -554,7 +531,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
   }
 }
 
-function truncatePlot(overview, mediaType, tmdbId) {
+function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
   const maxChars = 200; // Approx. 4 lines in Telegram
@@ -563,6 +540,6 @@ function truncatePlot(overview, mediaType, tmdbId) {
   }
 
   const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
-  const readMoreLink = `https://www.themoviedb.org/${mediaType}/${tmdbId}`;
+  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   return `${truncated}... [Read more](${readMoreLink})`;
 }
