@@ -436,7 +436,8 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
     return botStatus.message;
   }
   if (!botStatus.isAdmin) {
-    return JSON.stringify({
+    // Return error object instead of JSON string
+    return {
       type: 'bot_admin_error',
       message: `❌ Bot is not an admin in your channel.`,
       botUsername: botStatus.botUsername,
@@ -445,7 +446,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
         `2. Promote it to admin with "Post Messages" permission`,
         `3. Try posting again`
       ]
-    });
+    };
   }
 
   // All image sources failed - fallback to text message
