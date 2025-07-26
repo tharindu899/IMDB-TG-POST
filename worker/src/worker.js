@@ -183,9 +183,9 @@ async function sendToTelegram(payload, env) {
   }
 
   // Get details DIRECTLY using ID
-  const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
-  const detailsResponse = await fetch(detailsUrl);
-  const details = await detailsResponse.json();
+  // const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
+//   const detailsResponse = await fetch(detailsUrl);
+//   const details = await detailsResponse.json();
 
   // Handle invalid ID
   if (details.status_code === 34) {
@@ -245,9 +245,9 @@ async function sendToTelegram(payload, env) {
   const tmdbId = selected.id;
 
   // Get full details
-  // const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}`;
-//   const detailsResponse = await fetch(detailsUrl);
-//   const details = await detailsResponse.json();
+  const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+  const detailsResponse = await fetch(detailsUrl);
+  const details = await detailsResponse.json();
 
   // Get external IDs
   let imdbId = null;
