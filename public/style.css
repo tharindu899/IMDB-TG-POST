@@ -925,3 +925,32 @@ body::before {
   text-align: center;
   font-weight: 600;
 }
+
+/* New CSS for header icons */
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.icon-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.icon-svg {
+  width: 20px;
+  height: 20px;
+  color: #4ecdc4;
+}
