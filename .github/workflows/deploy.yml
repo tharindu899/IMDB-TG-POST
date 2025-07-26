@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       worker-url: ${{ steps.deploy_worker.outputs.url }}
-    
+      auth-token: ${{ steps.gen_token.outputs.token }}
+
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
@@ -20,6 +21,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: 🔑 Generate AUTH_TOKEN
+        id: gen_token
+        run: |
+          # generate 32 random bytes → 64 hex chars
+          TOKEN=$(openssl rand -hex 32)
+          echo "Generated token: $TOKEN"
+          echo "::set-output name=token::$TOKEN"
 
       - name: 📥 Install Wrangler CLI
         run: npm install -g wrangler@4
@@ -34,19 +43,22 @@ jobs:
         id: deploy_worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          TELEGRAM_BOT_TOKEN:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TMDB_API_KEY:         ${{ secrets.TMDB_API_KEY }}
+          AUTH_TOKEN:           ${{ steps.gen_token.outputs.token }}
         run: |
-          # Set secrets
-          echo "${{ secrets.TELEGRAM_BOT_TOKEN }}" | wrangler secret put TELEGRAM_BOT_TOKEN
-          echo "${{ secrets.TMDB_API_KEY }}" | wrangler secret put TMDB_API_KEY
-          echo "${{ secrets.AUTH_TOKEN }}" | wrangler secret put AUTH_TOKEN
-          
+          # Push secrets into Worker
+          echo "${TELEGRAM_BOT_TOKEN}" | wrangler secret put TELEGRAM_BOT_TOKEN
+          echo "${TMDB_API_KEY}"       | wrangler secret put TMDB_API_KEY
+          echo "${AUTH_TOKEN}"         | wrangler secret put AUTH_TOKEN
+
           # Deploy worker and capture output
           DEPLOY_OUTPUT=$(wrangler deploy)
           echo "$DEPLOY_OUTPUT"
-          
+
           # Extract Worker URL
           WORKER_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | head -n1)
-          echo "Worker URL: $WORKER_URL"
+          echo "::set-output name=url::$WORKER_URL"
           echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
 
   deploy-frontend:
@@ -60,11 +72,11 @@ jobs:
 
       - name: 📝 Inject Worker URL
         run: |
-          sed -i "s|const workerUrl = '.*';|const workerUrl = '${{ needs.deploy-worker.outputs.worker-url }}';|g" public/script.js
+          sed -i "s|__WORKER_URL__|${{ needs.deploy-worker.outputs.worker-url }}|g" public/script.js
 
       - name: 📝 Inject Auth Token
         run: |
-          sed -i "s|const AUTH_TOKEN = '.*';|const AUTH_TOKEN = '${{ secrets.AUTH_TOKEN }}';|g" public/script.js
+          sed -i "s|__AUTH_TOKEN__|${{ needs.deploy-worker.outputs.auth-token }}|g" public/script.js
 
       - name: 🔍 Check if Pages project exists
         id: check_pages
@@ -73,21 +85,11 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           PROJECT_NAME: imdb-tg-post-font
         run: |
-          echo "Checking if Cloudflare Pages project '${PROJECT_NAME}' exists..."
           RESPONSE=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json")
-
-          # Check if project exists in list
           EXISTS=$(echo "$RESPONSE" | jq -r --arg NAME "$PROJECT_NAME" '.result[] | select(.name == $NAME) | .name')
-
-          if [ "$EXISTS" = "$PROJECT_NAME" ]; then
-            echo "Project exists"
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Project does not exist"
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
+          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
 
       - name: 🚧 Create Pages project if not exists
         if: steps.check_pages.outputs.exists == 'false'
@@ -96,7 +98,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           PROJECT_NAME: imdb-tg-post-font
         run: |
-          echo "Creating Cloudflare Pages project '${PROJECT_NAME}'..."
           curl -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
@@ -108,13 +109,12 @@ jobs:
                 "destination_dir": "public"
               }
             }'
-          echo "Project created. Waiting for propagation..."
-          sleep 30  # Allow time for project initialization
+          sleep 30
 
       - name: 🔧 Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@1
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
+          apiToken:  ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           projectName: imdb-tg-post-font
           directory: ./public
