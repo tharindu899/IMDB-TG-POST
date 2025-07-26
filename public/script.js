@@ -463,19 +463,41 @@ async function handlePost() {
       body: JSON.stringify(payload)
     });
 
-    // Handle non-JSON responses
     const responseText = await response.text();
     let responseData;
+    
     try {
       responseData = JSON.parse(responseText);
     } catch (e) {
+      // Handle non-JSON responses
       throw new Error(`Invalid server response: ${responseText.slice(0, 100)}`);
     }
 
+    // Handle different response formats
+    let resultMessage = responseData;
+    if (typeof responseData === 'object' && responseData.result) {
+      resultMessage = responseData.result;
+    }
+
     // Handle bot admin errors
-    if (responseData.type === 'bot_admin_error') {
-      createBotAdminPopup(responseData);
+    if (typeof resultMessage === 'object' && resultMessage.type === 'bot_admin_error') {
+      createBotAdminPopup(resultMessage);
       return;
+    }
+    if (typeof resultMessage === 'string' && resultMessage.includes('bot_admin_error')) {
+      try {
+        // Try to parse the error JSON
+        const errorData = JSON.parse(resultMessage);
+        createBotAdminPopup(errorData);
+        return;
+      } catch (e) {
+        // If parsing fails, show raw message
+        createBotAdminPopup({
+          message: resultMessage,
+          botUsername: 'your_bot'
+        });
+        return;
+      }
     }
 
     if (!response.ok) {
@@ -483,7 +505,7 @@ async function handlePost() {
     }
 
     // Reset form only on success
-    if (responseData.result && responseData.result.startsWith('✅')) {
+    if (resultMessage && resultMessage.startsWith('✅')) {
       searchInput.value = '';
       resultSelect.innerHTML = '<option value="">Select Result</option>';
       seasonInput.value = '';
@@ -492,20 +514,20 @@ async function handlePost() {
       noteInput.value = '';
       resetPreview();
       populateCustomDropdown();
-      updateStatus(responseData.result, 'success');
-    } else if (responseData.result.startsWith('❌')) {
-      updateStatus(responseData.result, 'error');
+      updateStatus(resultMessage, 'success');
+    } else if (resultMessage && resultMessage.startsWith('❌')) {
+      updateStatus(resultMessage, 'error');
     }
     
-    // Handle special admin errors
-    if (responseData.result.includes('Bot is not in your channel') || 
-        responseData.result.includes('not an admin')) {
+    // Handle legacy string-based admin errors
+    if (resultMessage && (resultMessage.includes('Bot is not in your channel') || 
+        resultMessage.includes('not an admin'))) {
       // Extract bot username from the error message
-      const botUsernameMatch = responseData.result.match(/@(\w+)/);
+      const botUsernameMatch = resultMessage.match(/@(\w+)/);
       const botUsername = botUsernameMatch ? botUsernameMatch[0] : 'your_bot';
       
       createBotAdminPopup({
-        message: responseData.result,
+        message: resultMessage,
         botUsername: botUsername
       });
     }
