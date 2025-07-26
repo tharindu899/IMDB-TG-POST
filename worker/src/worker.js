@@ -168,14 +168,29 @@ async function sendToTelegram(payload, env) {
   
   // Extract payload data
   const { 
-    title, 
-    choice_idx, 
+    tmdb_id, 
+    media_type,
     season, 
     episode, 
     custom_link, 
     note,
     channel_id
   } = payload;
+
+  // Validate TMDB ID
+  if (!tmdb_id || !media_type) {
+    return "❌ Missing TMDB ID or media type";
+  }
+
+  // Get details DIRECTLY using ID
+  const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
+  const detailsResponse = await fetch(detailsUrl);
+  const details = await detailsResponse.json();
+
+  // Handle invalid ID
+  if (details.status_code === 34) {
+    return "❌ Invalid TMDB ID";
+  }
   
   // Use channel ID from payload if provided
   const CHANNEL_ID = channel_id || env.TELEGRAM_CHANNEL_ID;
