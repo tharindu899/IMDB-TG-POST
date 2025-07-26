@@ -238,11 +238,9 @@ function populateCustomDropdown() {
 }
 
 // Handle search
-// ... existing code ...
-
 async function handleSearch() {
   const title = searchInput.value.trim();
-  
+
   if (!title) {
     updateStatus('❌ Please enter a title', 'error');
     return;
@@ -250,36 +248,49 @@ async function handleSearch() {
 
   try {
     updateStatus('🔍 Searching TMDB...', 'loading');
-    
-    // Improved regex to handle various title formats
+
+    // 1) Extract title + optional year
     const regex = /^(.*?)(?:\s+\((\d{4})\)|\s+(\d{4}))?$/;
     const match = title.match(regex);
     const cleanTitle = (match[1] || title).trim();
     const year = match[2] || match[3] || '';
 
-    // Build API URL
-    let apiUrl = `https://api.themoviedb.org/3/search/multi?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb&query=${encodeURIComponent(cleanTitle)}&include_adult=false`;
-    if (year) {
-      apiUrl += `&year=${year}`;
-    }
+    // 2) Build TMDB URL
+    let apiUrl =
+      `https://api.themoviedb.org/3/search/multi` +
+      `?api_key=15d2ea6d0dc1d476efbca3eba2b9bbfb` +
+      `&query=${encodeURIComponent(cleanTitle)}` +
+      `&include_adult=false`;
+    if (year) apiUrl += `&year=${year}`;
 
-    // TMDB API call
+    // 3) Fetch & parse
     const response = await fetch(apiUrl);
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     const data = await response.json();
+    let results = (data.results || [])
+      .filter(item => item.media_type === 'movie' || item.media_type === 'tv');
 
-    // Filter and sort results
-    searchResults = (data.results || [])
-      .filter(item => 
-        item.media_type === 'movie' || 
-        item.media_type === 'tv'
-      )
-      .sort((a, b) => 
-        (b.popularity || 0) - (a.popularity || 0) ||  // Sort by popularity
-        (b.vote_count || 0) - (a.vote_count || 0)    // Then by vote count
-      )
-      .slice(0, 10);  // Limit to top 10 results
+    // 4) If user specified a year, filter to exact-year matches
+    if (year) {
+      const yearMatches = results.filter(item => {
+        const date = item.release_date || item.first_air_date || '';
+        return date.startsWith(year + '-');
+      });
+      // Only use filtered list if we found any
+      if (yearMatches.length) {
+        results = yearMatches;
+      }
+    }
 
+    // 5) Sort by popularity & votes, then limit to top 10
+    searchResults = results
+      .sort((a, b) =>
+        (b.popularity || 0) - (a.popularity || 0) ||
+        (b.vote_count   || 0) - (a.vote_count   || 0)
+      )
+      .slice(0, 10);
+
+    // 6) Handle no-results
     if (searchResults.length === 0) {
       updateStatus('❌ No results found', 'error');
       resultSelect.innerHTML = '<option value="">No results found</option>';
@@ -288,36 +299,23 @@ async function handleSearch() {
       return;
     }
 
-    // Populate dropdowns
+    // 7) Populate dropdown for manual selection only
     resultSelect.innerHTML = '<option value="">📋 Select Result</option>';
-    searchResults.forEach((result, index) => {
-      const option = document.createElement('option');
-      option.value = index;
-      option.textContent = formatDropdownOption(result);
-      resultSelect.appendChild(option);
+    searchResults.forEach((result, idx) => {
+      const opt = document.createElement('option');
+      opt.value        = idx;
+      opt.textContent  = formatDropdownOption(result);
+      resultSelect.appendChild(opt);
     });
     populateCustomDropdown();
 
-    // Auto-select first result if perfect match exists
-    const exactMatch = searchResults.find(item => {
-      const itemTitle = (item.title || item.name || '').toLowerCase();
-      return itemTitle === cleanTitle.toLowerCase();
-    });
-    
-    if (exactMatch) {
-      const matchIndex = searchResults.indexOf(exactMatch);
-      resultSelect.value = matchIndex;
-      updatePreview();
-    }
-
-    updateStatus(`✅ Found ${searchResults.length} best matches`, 'success');
-  } catch (error) {
-    updateStatus(`❌ Error: ${error.message}`, 'error');
-    console.error('Search error:', error);
+    updateStatus(`✅ Found ${searchResults.length} match${searchResults.length > 1 ? 'es' : ''}`, 'success');
+  }
+  catch (err) {
+    updateStatus(`❌ Error: ${err.message}`, 'error');
+    console.error('Search error:', err);
   }
 }
-
-// ... existing code ...
 
 // Format dropdown option text
 function formatDropdownOption(result) {
