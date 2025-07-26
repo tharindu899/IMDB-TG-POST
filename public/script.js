@@ -1,7 +1,5 @@
 // Update worker URL with your actual Telegram bot endpoint
-// const workerUrl = 'https://imdb-tg-post-back.tharindu311.workers.dev'; // REPLACE WITH YOUR WORKER URL
-// const AUTH_TOKEN = '0c17ff1698bcb57e6009ba921cfdd1e1b0e98976556325ea9713c3f7f9682e99'; // WILL_BE_REPLACED_BY_WORKFLOW
-const workerUrl  = '__WORKER_URL__';
+const workerUrl = '__WORKER_URL__';
 const AUTH_TOKEN = '__AUTH_TOKEN__';
 let searchResults = [];
 let selectedContent = null;
@@ -32,6 +30,10 @@ const closeModal = document.querySelector('.close');
 const channelIdInput = document.getElementById('channelIdInput');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const clearSettingsBtn = document.getElementById('clearSettingsBtn');
+
+// Debug logs
+console.log("Using worker URL:", workerUrl);
+console.log("Using auth token:", AUTH_TOKEN ? AUTH_TOKEN.substring(0, 5) + '...' : 'undefined');
 
 // Load settings from localStorage
 function loadSettings() {
@@ -435,17 +437,20 @@ async function handlePost() {
     return;
   }
   
-  // Construct payload
+  // Get selected content
+  const selected = searchResults[choiceIdx];
+  
+  // Construct payload with TMDB ID and media type
   const payload = {
     title,
     choice_idx: choiceIdx.toString(),
+    tmdb_id: selected.id,
+    media_type: selected.media_type,
     season,
     episode,
     custom_link: customLinkValue,
     note,
     channel_id: channelId
-    tmdb_id: selectedContent.id, // Add this
-    media_type: selectedContent.media_type // Add this
   };
 
   try {
