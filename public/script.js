@@ -444,6 +444,8 @@ async function handlePost() {
     custom_link: customLinkValue,
     note,
     channel_id: channelId
+    tmdb_id: selectedContent.id, // Add this
+    media_type: selectedContent.media_type // Add this
   };
 
   try {
