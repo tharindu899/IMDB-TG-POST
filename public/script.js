@@ -507,7 +507,7 @@ async function handlePost() {
     // Reset form only on success
     if (resultMessage && resultMessage.startsWith('✅')) {
       searchInput.value = '';
-      resultSelect.innerHTML = '<option value="">Select Result</option>';
+      resultSelect.innerHTML = '<option value="">❌ Search Frist</option>';
       seasonInput.value = '';
       episodeInput.value = '';
       customLink.value = '';
