@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 name: Deploy Worker & Frontend to Cloudflare ☁️🚀
 
 on:
@@ -28,7 +29,8 @@ jobs:
           # generate 32 random bytes → 64 hex chars
           TOKEN=$(openssl rand -hex 32)
           echo "Generated token: $TOKEN"
-          echo "::set-output name=token::$TOKEN"
+          # use environment file instead of deprecated set-output
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: 📥 Install Wrangler CLI
         run: npm install -g wrangler@4
@@ -58,8 +60,8 @@ jobs:
 
           # Extract Worker URL
           WORKER_URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^ ]*\.workers\.dev' | head -n1)
-          echo "::set-output name=url::$WORKER_URL"
-          echo "url=$WORKER_URL" >> $GITHUB_OUTPUT
+          # use environment file instead of deprecated set-output
+          echo "url=$WORKER_URL" >> "$GITHUB_OUTPUT"
 
   deploy-frontend:
     name: 🌐 Deploy Frontend to Cloudflare Pages
@@ -89,7 +91,7 @@ jobs:
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json")
           EXISTS=$(echo "$RESPONSE" | jq -r --arg NAME "$PROJECT_NAME" '.result[] | select(.name == $NAME) | .name')
-          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
 
       - name: 🚧 Create Pages project if not exists
         if: steps.check_pages.outputs.exists == 'false'
