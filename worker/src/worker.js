@@ -265,71 +265,70 @@ async function sendToTelegram(payload, env) {
     ? (details.first_air_date?.split('-')[0] || 'N/A')
     : (details.release_date?.split('-')[0] || 'N/A');
   
-// Helper to escape any &, <, > in dynamic text
-function escapeHTML(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-let headerLine = '';
-let episodeInfo = '';
-
-if (isSeries) {
-  const hasSeason  = season  != null && season  !== '';
-  const hasEpisode = episode != null && episode !== '';
-
-  if (hasSeason && hasEpisode) {
-    const S = String(season).padStart(2, '0');
-    const E = String(episode).padStart(2, '0');
-    headerLine  = `🦠 <b>NEW EPISODE ADDED!</b> 🦠\n`;
-    episodeInfo = `🔊 <i>S${S} E${E}</i> 🔥\n`;
-  } 
-  else if (hasSeason) {
-    const S = String(season).padStart(2, '0');
-    headerLine  = `🦠 <b>SEASON COMPLETE!</b> 🦠\n`;
-    episodeInfo = `🔊 <i>S${S}</i> 🔥\n`;
-  } 
-  else {
-    headerLine = `🌟 <b>NEW SERIES ADDED!</b> 🌟\n`;
+  // Handle series cases
+  let headerLine = "";
+  let episodeInfo = ""; // Changed variable name for clarity
+  
+  if (isSeries) {
+    const hasSeason = season !== undefined && season !== null && season !== '';
+    const hasEpisode = episode !== undefined && episode !== null && episode !== '';
+    
+    if (hasSeason && hasEpisode) {
+      const formattedSeason = String(season).padStart(2, '0');
+      const formattedEpisode = String(episode).padStart(2, '0');
+      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n`;
+      episodeInfo = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
+    } 
+    else if (hasSeason) {
+      const formattedSeason = String(season).padStart(2, '0');
+      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n`;
+      episodeInfo = `🔊 *S${formattedSeason}* 🔥\n`;
+    } 
+    else {
+      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n`;
+    }
+  } else {
+    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n`;
   }
-} else {
-  headerLine = `🌟 <b>NEW MOVIE ADDED!</b> 🌟\n`;
-}
 
-let message = `
+  // Handle links - only use custom links or official sources
+  let siteLink = custom_link;
+  let imdbButton = null;
+  
+  if (imdbId) {
+    imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
+  }
+
+
+  // Format message
+  let message = `
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
 
-🎬 <b>${escapeHTML(contentTitle)}</b> (${escapeHTML(year)})
-📺 <b>Type:</b> ${isSeries ? 'TV Series' : 'Movie'}
-🗣️ <b>Language:</b> ${escapeHTML(languageInfo)}
-⭐ <b>Rating:</b> ${details.vote_average != null
-     ? escapeHTML(details.vote_average.toFixed(1))
-     : 'N/A'}/10
-🎭 <b>Genres:</b> ${escapeHTML(
-     (details.genres || []).slice(0,3).map(g => g.name).join(', ') || 'N/A'
-   )}
+🎬 *${contentTitle}* (${year})
+📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
+🗣️ *Language:* ${languageInfo}
+⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 <b>Plot:</b> ${escapeHTML(truncatePlot(details.overview, media_type, tmdb_id))}
-`.trim();
+📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
+  `.trim();
 
-// Separator before notes/banners
-if (note || clientBanner) {
-  message += `\n━━━━━━━━━━━━━━━━━━━`;
-}
-
-// Note
-if (note) {
-  message += `\n💬 <b>Note:</b> ${escapeHTML(note)}`;
-}
-
-// Client banner (allowing only your supported tags)
-if (clientBanner) {
-  const safeBanner = htmlToMarkdown(clientBanner);
-  message += `\n\n${safeBanner}`;
-}
-
+  // Add separator before notes/banners if they exist
+  if (note || clientBanner) {
+    message += `━━━━━━━━━━━━━━━━━━━`;
+  }
+  
+  // Add note if provided
+  if (note) {
+    message += `\n💬 *Note:* ${note}`;
+  }
+  
+  // Add client banner if exists
+  if (clientBanner) {
+    // Convert HTML tags to Markdown
+    const markdownBanner = htmlToMarkdown(clientBanner);
+    message += `\n\n${markdownBanner}`;
+  }
 
   // Prepare buttons
   const buttons = [];
