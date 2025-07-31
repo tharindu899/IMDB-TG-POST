@@ -303,6 +303,7 @@ async function sendToTelegram(payload, env) {
   // Format message
   let message = `
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
+
 🎬 *${contentTitle}* (${year})
 📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 🗣️ *Language:* ${languageInfo}
