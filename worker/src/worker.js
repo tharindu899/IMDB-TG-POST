@@ -315,7 +315,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
 
   // Add separator before notes/banners if they exist
   if (note || clientBanner) {
-    message += `\n━━━━━━━━━━━━━━━━━━━`;
+    message += `━━━━━━━━━━━━━━━━━━━`;
   }
   
   // Add note if provided
@@ -409,7 +409,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "Markdown",
+                parse_mode: "HTML",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -434,7 +434,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "Markdown",
+                parse_mode: "HTML",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -531,7 +531,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "Markdown", // Keep Markdown parse mode
+      parse_mode: "HTML", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -573,9 +573,11 @@ function escapeMarkdown(text) {
 // Add this helper function to convert HTML tags to Markdown
 function htmlToMarkdown(html) {
   return html
-    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
-    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
-    .replace(/<code>|<\/code>/g, '`')
-    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
-    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
+    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '<b>')
+    .replace(/<i>|<\/i>|<em>|<\/em>/g, '<i>')
+    .replace(/<code>|<\/code>/g, '<code>')
+    .replace(/<spoiler>|<\/spoiler>/g, '<tg-spoiler>')
+    .replace(/<tg-spoiler>/g, '<tg-spoiler>')
+    .replace(/<\/tg-spoiler>/g, '</tg-spoiler>')
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '<a href="$1">$2</a>');
 }
