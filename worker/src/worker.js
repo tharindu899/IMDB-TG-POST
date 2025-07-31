@@ -570,14 +570,26 @@ function escapeMarkdown(text) {
   return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
 }
 
-// Add this helper function to convert HTML tags to Markdown
 function htmlToMarkdown(html) {
+  // 1. Remove any HTML comments entirely
+  html = html.replace(/<!--[\s\S]*?-->/g, '');
+
+  // 2. Convert supported tags (open + close) to Telegram-safe HTML
   return html
-    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '<b>')
-    .replace(/<i>|<\/i>|<em>|<\/em>/g, '<i>')
-    .replace(/<code>|<\/code>/g, '<code>')
-    .replace(/<spoiler>|<\/spoiler>/g, '<tg-spoiler>')
-    .replace(/<tg-spoiler>/g, '<tg-spoiler>')
-    .replace(/<\/tg-spoiler>/g, '</tg-spoiler>')
-    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '<a href="$1">$2</a>');
+    // bold
+    .replace(/<b>/g, '<b>').replace(/<\/b>/g, '</b>')
+    .replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>')
+    // italic
+    .replace(/<i>/g, '<i>').replace(/<\/i>/g, '</i>')
+    .replace(/<em>/g, '<i>').replace(/<\/em>/g, '</i>')
+    // code / pre
+    .replace(/<code>/g, '<code>').replace(/<\/code>/g, '</code>')
+    .replace(/<pre>/g, '<pre>').replace(/<\/pre>/g, '</pre>')
+    // spoiler
+    .replace(/<spoiler>/g, '<tg-spoiler>').replace(/<\/spoiler>/g, '</tg-spoiler>')
+    // links
+    .replace(
+      /<a\s+href="([^"]*)">([\s\S]*?)<\/a>/g,
+      '<a href="$1">$2</a>'
+    );
 }
