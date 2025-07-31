@@ -111,7 +111,7 @@ async function handleBotCommand(request, env) {
 }
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
-  const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
+  const message = `🎬 <b>Welcome to IMDB-TG-POST Bot!</b> 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
   
   const buttons = [
     [
@@ -131,10 +131,10 @@ async function handleStartCommand(BOT_TOKEN, chatId) {
 }
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
-  const message = `🤖 *Bot Help Center*\n\nHere are the available commands:\n\n` +
+  const message = `🤖 <b>Bot Help Center</b>\n\nHere are the available commands:\n\n` +
     `• /start - Welcome IMDB-TG-POST\n` +
     `• /help - Show this help message\n\n` +
-    `*How to use:*\n` +
+    `<b>How to use:</b>\n` +
     `1. Add me to your channel as admin\n` +
     `2. Go to site & explore\n` +
     `3. Add your channel ID form the top setting botton\n\n` +
@@ -276,19 +276,19 @@ async function sendToTelegram(payload, env) {
     if (hasSeason && hasEpisode) {
       const formattedSeason = String(season).padStart(2, '0');
       const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n`;
-      episodeInfo = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
+      headerLine = `🦠 <b>NEW EPISODE ADDED!</b> 🦠\n`;
+      episodeInfo = `🔊 <b>S${formattedSeason} E${formattedEpisode}</b> 🔥\n`;
     } 
     else if (hasSeason) {
       const formattedSeason = String(season).padStart(2, '0');
-      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n`;
-      episodeInfo = `🔊 *S${formattedSeason}* 🔥\n`;
+      headerLine = `🦠 <b>SEASON COMPLETE!</b> 🦠\n`;
+      episodeInfo = `🔊 <b>S${formattedSeason}</b> 🔥\n`;
     } 
     else {
-      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n`;
+      headerLine = `🌟 <b>NEW SERIES ADDED!</b> 🌟\n`;
     }
   } else {
-    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n`;
+    headerLine = `🌟 <b>NEW MOVIE ADDED!</b> 🌟\n`;
   }
 
   // Handle links - only use custom links or official sources
@@ -305,12 +305,12 @@ async function sendToTelegram(payload, env) {
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
 
 🎬 <b>${contentTitle}</b> (${year})
-📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
-🗣️ *Language:* ${languageInfo}
-⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
+📺 <b>Type:</b> ${isSeries ? 'TV Series' : 'Movie'}
+🗣️ <b>Language:</b> ${languageInfo}
+⭐ <b>Rating:</b> ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+🎭 <b>Genres:</b> ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
+📖 <b>Plot:</b> ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
   // Add separator before notes/banners if they exist
@@ -320,7 +320,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
   
   // Add note if provided
   if (note) {
-    message += `\n💬 *Note:* ${note}`;
+    message += `\n💬 <b>Note:</b> ${note}`;
   }
   
   // Add client banner if exists
