@@ -555,7 +555,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-  const maxChars = 200; // Approx. 4 lines in Telegram
+  const maxChars = 163; // Approx. 3 lines in Telegram
   if (overview.length <= maxChars) {
     return overview;
   }
