@@ -315,7 +315,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
 
   // Add separator before notes/banners if they exist
   if (note || clientBanner) {
-    message += `\n\n━━━━━━━━━━━━━━━━━━━`;
+    message += `━━━━━━━━━━━━━━━━━━━`;
   }
   
   // Add note if provided
