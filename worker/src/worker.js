@@ -276,17 +276,19 @@ async function sendToTelegram(payload, env) {
     if (hasSeason && hasEpisode) {
       const formattedSeason = String(season).padStart(2, '0');
       const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine = `🦠 *New Episode Added!* - 🔊 S${formattedSeason} E${formattedEpisode} 🔥\n\n`;
-      episodeDisplay = `🔊 S${formattedSeason} E${formattedEpisode} 🔥\n`;
+      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
+      episodeDisplay = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
     } 
     else if (hasSeason) {
       const formattedSeason = String(season).padStart(2, '0');
-      headerLine = `🦠 *Season Complete!* - 🔊 S${formattedSeason} 🔥\n\n`;
-      episodeDisplay = `🔊 S${formattedSeason} 🔥\n`;
+      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
+      episodeDisplay = `🔊 *S${formattedSeason}* 🔥\n`;
     } 
     else {
-      headerLine = "🌟 *New Series Added!*\n\n";
+      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
     }
+  } else {
+    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
   }
 
   // Handle links - only use custom links or official sources
@@ -297,17 +299,23 @@ async function sendToTelegram(payload, env) {
     imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
   }
 
-// Format message
-  let message = `
-${headerLine}🎬 *${contentTitle}* (${year})
-${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
-🗣️ *Language:* ${languageInfo}
-⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
+  // Format message
+  let message = `
+  ${headerLine}🎬 *${contentTitle}* (${year})
+  ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
+  🗣️ *Language:* ${languageInfo}
+  ⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+  🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
+  
+  📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
+  // Add separator before notes/banners if they exist
+  if (note || clientBanner) {
+    message += `\n\n━━━━━━━━━━━━━━━━━━━`;
+  }
+  
   // Add note if provided
   if (note) {
     message += `\n\n💬 *Note:* ${note}`;
