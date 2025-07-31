@@ -556,14 +556,14 @@ function truncatePlot(overview, media_type, tmdb_id) {
 }
 
 // Add this helper function to convert HTML tags to Markdown
-function htmlToMarkdown(html) {
-  const escape = (text) =>
-    text.replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&'); // escape V2 special chars
-
+function htmlToMarkdownV2(html) {
   return html
-    .replace(/<b>(.*?)<\/b>|<strong>(.*?)<\/strong>/gi, (_, b1, b2) => `*${escape(b1 || b2)}*`)
-    .replace(/<i>(.*?)<\/i>|<em>(.*?)<\/em>/gi, (_, i1, i2) => `_${escape(i1 || i2)}_`)
-    .replace(/<code>(.*?)<\/code>/gi, (_, c1) => `\`${escape(c1)}\``)
-    .replace(/<spoiler>(.*?)<\/spoiler>|<tg-spoiler>(.*?)<\/tg-spoiler>/gi, (_, s1, s2) => `||${escape(s1 || s2)}||`)
-    .replace(/<a href="([^"]+)">([^<]+)<\/a>/gi, (_, href, text) => `[${escape(text)}](${href})`);
+    .replace(/<b>(.*?)<\/b>/gi, (_, text) => `*${text}*`)
+    .replace(/<i>(.*?)<\/i>/gi, (_, text) => `_${text}_`)
+    .replace(/<code>(.*?)<\/code>/gi, (_, text) => `\`${text}\``)
+    .replace(/<spoiler>(.*?)<\/spoiler>/gi, (_, text) => text)
+    .replace(/<tg-spoiler>(.*?)<\/tg-spoiler>/gi, (_, text) => text)
+    .replace(/<a href="([^"]+)">([^<]+)<\/a>/gi, (_, href, text) => `[${text}](${href})`)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?[^>]+>/gi, ''); // remove unknown tags
 }
