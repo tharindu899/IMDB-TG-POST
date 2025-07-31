@@ -308,14 +308,16 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
-  // Add client banner if exists
-  if (clientBanner) {
-    message += `\n\n${clientBanner}`;
-  }
-
   // Add note if provided
   if (note) {
     message += `\n\n💬 *Note:* ${note}`;
+  }
+  
+  // Add client banner if exists
+  if (clientBanner) {
+    // Escape markdown characters in the banner
+    const escapedBanner = escapeMarkdown(clientBanner);
+    message += `\n\n${escapedBanner}`;
   }
 
   // Prepare buttons
@@ -551,4 +553,9 @@ function truncatePlot(overview, media_type, tmdb_id) {
   const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   return `${truncated}... [Read more](${readMoreLink})`;
+}
+
+// Helper to escape markdown characters
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
 }
