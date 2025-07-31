@@ -265,59 +265,71 @@ async function sendToTelegram(payload, env) {
     ? (details.first_air_date?.split('-')[0] || 'N/A')
     : (details.release_date?.split('-')[0] || 'N/A');
   
-  // Handle series cases
-  let headerLine = "";
-  let episodeInfo = "";
-  
-    if (isSeries) {
-      const hasSeason = season !== undefined && season !== null && season !== '';
-      const hasEpisode = episode !== undefined && episode !== null && episode !== '';
-  
-    if (hasSeason && hasEpisode) {
-      const formattedSeason = String(season).padStart(2, '0');
-      const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine   = `🦠 <b>NEW EPISODE ADDED!</b> 🦠\n`;
-      episodeInfo  = `🔊 <i>S${formattedSeason} E${formattedEpisode}</i> 🔥\n`;
-    } 
-    else if (hasSeason) {
-      const formattedSeason = String(season).padStart(2, '0');
-      headerLine   = `🦠 <b>SEASON COMPLETE!</b> 🦠\n`;
-      episodeInfo  = `🔊 <i>S${formattedSeason}</i> 🔥\n`;
-    } 
-    else {
-      headerLine = `🌟 <b>NEW SERIES ADDED!</b> 🌟\n`;
-    }
-  } else {
-    headerLine = `🌟 <b>NEW MOVIE ADDED!</b> 🌟\n`;
+// Helper to escape any &, <, > in dynamic text
+function escapeHTML(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+let headerLine = '';
+let episodeInfo = '';
+
+if (isSeries) {
+  const hasSeason  = season  != null && season  !== '';
+  const hasEpisode = episode != null && episode !== '';
+
+  if (hasSeason && hasEpisode) {
+    const S = String(season).padStart(2, '0');
+    const E = String(episode).padStart(2, '0');
+    headerLine  = `🦠 <b>NEW EPISODE ADDED!</b> 🦠\n`;
+    episodeInfo = `🔊 <i>S${S} E${E}</i> 🔥\n`;
+  } 
+  else if (hasSeason) {
+    const S = String(season).padStart(2, '0');
+    headerLine  = `🦠 <b>SEASON COMPLETE!</b> 🦠\n`;
+    episodeInfo = `🔊 <i>S${S}</i> 🔥\n`;
+  } 
+  else {
+    headerLine = `🌟 <b>NEW SERIES ADDED!</b> 🌟\n`;
   }
-  
-  let message = `
+} else {
+  headerLine = `🌟 <b>NEW MOVIE ADDED!</b> 🌟\n`;
+}
+
+let message = `
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
 
-🎬 <b>${contentTitle}</b> (${year})
+🎬 <b>${escapeHTML(contentTitle)}</b> (${escapeHTML(year)})
 📺 <b>Type:</b> ${isSeries ? 'TV Series' : 'Movie'}
-🗣️ <b>Language:</b> ${languageInfo}
-⭐ <b>Rating:</b> ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-🎭 <b>Genres:</b> ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
+🗣️ <b>Language:</b> ${escapeHTML(languageInfo)}
+⭐ <b>Rating:</b> ${details.vote_average != null
+     ? escapeHTML(details.vote_average.toFixed(1))
+     : 'N/A'}/10
+🎭 <b>Genres:</b> ${escapeHTML(
+     (details.genres || []).slice(0,3).map(g => g.name).join(', ') || 'N/A'
+   )}
 
-📖 <b>Plot:</b> ${truncatePlot(details.overview, media_type, tmdb_id)}
+📖 <b>Plot:</b> ${escapeHTML(truncatePlot(details.overview, media_type, tmdb_id))}
 `.trim();
 
-  // Separator before notes/banners
-  if (note || clientBanner) {
-    message += `\n━━━━━━━━━━━━━━━━━━━`;
-  }
-  
-  // Note
-  if (note) {
-    message += `\n💬 <b>Note:</b> ${note}`;
-  }
-  
-  // Client banner (HTML → Telegram-safe HTML)
-  if (clientBanner) {
-    const markdownBanner = htmlToMarkdown(clientBanner);
-    message += `\n\n${markdownBanner}`;
-  }
+// Separator before notes/banners
+if (note || clientBanner) {
+  message += `\n━━━━━━━━━━━━━━━━━━━`;
+}
+
+// Note
+if (note) {
+  message += `\n💬 <b>Note:</b> ${escapeHTML(note)}`;
+}
+
+// Client banner (allowing only your supported tags)
+if (clientBanner) {
+  const safeBanner = htmlToMarkdown(clientBanner);
+  message += `\n\n${safeBanner}`;
+}
+
 
   // Prepare buttons
   const buttons = [];
