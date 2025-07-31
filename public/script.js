@@ -459,7 +459,9 @@ async function handlePost() {
     custom_link: customLinkValue,
     note,
     channel_id: channelId,
-    client_banner: clientBanner
+    settings: {
+      clientBanner: clientBanner
+    }
   };
 
   try {
