@@ -553,8 +553,3 @@ function truncatePlot(overview, media_type, tmdb_id) {
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   return `${truncated}... [Read more](${readMoreLink})`;
 }
-
-// Helper to escape markdown characters
-function escapeMarkdown(text) {
-  return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
-}
