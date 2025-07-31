@@ -315,9 +315,9 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   
   // Add client banner if exists
   if (clientBanner) {
-    // Convert HTML tags to Markdown
+    // Convert HTML tags to MarkdownV2
     const markdownBanner = htmlToMarkdown(clientBanner);
-    message += `\n\n${markdownBanner}`;
+    message += `\n\n${escapeMarkdownV2(markdownBanner)}`;
   }
 
   // Prepare buttons
@@ -521,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "Markdown", // Keep Markdown parse mode
+      parse_mode: "MarkdownV2",  // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -566,6 +566,6 @@ function htmlToMarkdown(html) {
     .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
     .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
     .replace(/<code>|<\/code>/g, '`')
-    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
+    .replace(/<spoiler>([^<]*)<\/spoiler>|<tg-spoiler>([^<]*)<\/tg-spoiler>/g, '||$1$2||')
     .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
 }
