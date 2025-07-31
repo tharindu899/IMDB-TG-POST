@@ -166,6 +166,7 @@ async function sendToTelegram(payload, env) {
   const settings = payload.settings || {};
   const clientBanner = settings.clientBanner || '';
   
+  
   if (!BOT_TOKEN) {
     throw new Error('Missing Telegram Bot Token');
   }
@@ -296,7 +297,7 @@ async function sendToTelegram(payload, env) {
     imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
   }
 
-  // Format message
+// Format message
   let message = `
 ${headerLine}🎬 *${contentTitle}* (${year})
 ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
@@ -314,7 +315,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   
   // Add client banner if exists
   if (clientBanner) {
-    // Convert HTML tags to Markdown with proper spoiler handling
+    // Convert HTML tags to Markdown
     const markdownBanner = htmlToMarkdown(clientBanner);
     message += `\n\n${markdownBanner}`;
   }
@@ -398,7 +399,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "MarkdownV2", // Updated to MarkdownV2 for better spoiler support
+                parse_mode: "MarkdownV2",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -423,7 +424,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "MarkdownV2", // Updated to MarkdownV2
+                parse_mode: "MarkdownV2",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -520,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "MarkdownV2", // Updated to MarkdownV2 for spoiler support
+      parse_mode: "MarkdownV2", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -554,28 +555,15 @@ function truncatePlot(overview, media_type, tmdb_id) {
   return `${truncated}... [Read more](${readMoreLink})`;
 }
 
-// Helper to escape markdown characters for MarkdownV2
-function escapeMarkdown(text) {
-  if (!text) return '';
-  // Only escape these specific MarkdownV2 special characters
-  return text.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
-}
-
-// Improved HTML to MarkdownV2 converter with proper spoiler handling
+// Add this helper function to convert HTML tags to Markdown
 function htmlToMarkdown(html) {
-  if (!html) return '';
-  
-  // First escape all special characters
-  let markdown = escapeMarkdown(html);
-  
-  // Then handle tags (order matters here)
-  markdown = markdown
-    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
-    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
-    .replace(/<code>|<\/code>/g, '`')
-    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)')
-    // Handle spoilers with proper MarkdownV2 syntax
-    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||');
-    
-  return markdown;
+  const escape = (text) =>
+    text.replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&'); // escape V2 special chars
+
+  return html
+    .replace(/<b>(.*?)<\/b>|<strong>(.*?)<\/strong>/gi, (_, b1, b2) => `*${escape(b1 || b2)}*`)
+    .replace(/<i>(.*?)<\/i>|<em>(.*?)<\/em>/gi, (_, i1, i2) => `_${escape(i1 || i2)}_`)
+    .replace(/<code>(.*?)<\/code>/gi, (_, c1) => `\`${escape(c1)}\``)
+    .replace(/<spoiler>(.*?)<\/spoiler>|<tg-spoiler>(.*?)<\/tg-spoiler>/gi, (_, s1, s2) => `||${escape(s1 || s2)}||`)
+    .replace(/<a href="([^"]+)">([^<]+)<\/a>/gi, (_, href, text) => `[${escape(text)}](${href})`);
 }
