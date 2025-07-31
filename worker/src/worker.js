@@ -302,13 +302,13 @@ async function sendToTelegram(payload, env) {
 
   // Format message
   let message = `
-  ${headerLine}🎬 *${contentTitle}* (${year})
-  ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
-  🗣️ *Language:* ${languageInfo}
-  ⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-  🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
-  
-  📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
+${headerLine}🎬 *${contentTitle}* (${year})
+${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
+🗣️ *Language:* ${languageInfo}
+⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
+
+📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
   // Add separator before notes/banners if they exist
