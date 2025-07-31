@@ -165,226 +165,286 @@ async function sendToTelegram(payload, env) {
   const TMDB_API_KEY = env.TMDB_API_KEY;
   const settings = payload.settings || {};
   const clientBanner = settings.clientBanner || '';
-
+  
+  
   if (!BOT_TOKEN) {
     throw new Error('Missing Telegram Bot Token');
   }
+  
   if (!TMDB_API_KEY) {
     throw new Error('Missing TMDB API key');
   }
 
   // Extract payload data
-  const {
+  const { 
     tmdb_id,
     media_type,
-    season,
-    episode,
-    custom_link,
+    season, 
+    episode, 
+    custom_link, 
     note,
     channel_id
   } = payload;
-
+  
   // Use channel ID from payload if provided
   const CHANNEL_ID = channel_id || env.TELEGRAM_CHANNEL_ID;
+  
   if (!CHANNEL_ID) {
     throw new Error('Missing Telegram Channel ID');
   }
+  
   if (!tmdb_id || !media_type) {
     throw new Error('Missing TMDB ID or media type');
   }
 
-  // Helper to truncate long plots
-  function truncatePlot(text) {
-    if (!text) return 'N/A';
-    return text.length > 400 ? text.slice(0, 397) + '…' : text;
-  }
-
-  // Fetch details
+  // Get full details directly using ID
   const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
-  const detailsRes = await fetch(detailsUrl);
-  if (!detailsRes.ok) throw new Error(`TMDB lookup failed: ${detailsRes.statusText}`);
-  const details = await detailsRes.json();
+  const detailsResponse = await fetch(detailsUrl);
+  const details = await detailsResponse.json();
 
   // Handle invalid ID
   if (details.status_code === 34) {
     return "❌ Invalid TMDB ID";
   }
 
-  // Fetch external IDs for IMDb
+  // Get external IDs
   let imdbId = null;
   try {
-    const ext = await (await fetch(
-      `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/external_ids?api_key=${TMDB_API_KEY}`
-    )).json();
-    imdbId = ext.imdb_id;
-  } catch (err) {
-    console.warn("Failed to fetch external IDs:", err);
+    const externalIdsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/external_ids?api_key=${TMDB_API_KEY}`;
+    const externalResponse = await fetch(externalIdsUrl);
+    const externalIds = await externalResponse.json();
+    imdbId = externalIds.imdb_id;
+  } catch (error) {
+    console.error("Failed to fetch external IDs:", error);
   }
 
-  // Fetch trailer key
+  // Fetch videos for trailer
   let trailerKey = null;
   try {
-    const vids = await (await fetch(
-      `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/videos?api_key=${TMDB_API_KEY}`
-    )).json();
-    if (Array.isArray(vids.results)) {
-      const tr = vids.results.find(v => v.site === "YouTube" && v.type === "Trailer");
-      if (tr) trailerKey = tr.key;
+    const videosUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/videos?api_key=${TMDB_API_KEY}`;
+    const videosResponse = await fetch(videosUrl);
+    const videosData = await videosResponse.json();
+    
+    if (videosData.results?.length > 0) {
+      const trailer = videosData.results.find(
+        v => v.site === "YouTube" && v.type === "Trailer"
+      );
+      if (trailer) trailerKey = trailer.key;
     }
-  } catch (err) {
-    console.warn("Failed to fetch videos:", err);
+  } catch (error) {
+    console.error("Failed to fetch videos:", error);
   }
 
-  // Prepare basic info
+  // Prepare content details
   const isSeries = media_type === 'tv';
   const contentTitle = isSeries ? details.name : details.title;
-  const year = isSeries
+  
+  function getLanguageInfo(code) {
+    const languages = {
+      en: { name: "English", flag: "🇺🇸" },
+      es: { name: "Spanish", flag: "🇪🇸" },
+      fr: { name: "French", flag: "🇫🇷" },
+      de: { name: "German", flag: "🇩🇪" },
+      it: { name: "Italian", flag: "🇮🇹" },
+      ja: { name: "Japanese", flag: "🇯🇵" },
+      ko: { name: "Korean", flag: "🇰🇷" },
+      zh: { name: "Chinese", flag: "🇨🇳" },
+      hi: { name: "Hindi", flag: "🇮🇳" },
+      ru: { name: "Russian", flag: "🇷🇺" },
+      te: { name: "Telugu", flag: "🇮🇳" },
+      ta: { name: "Tamil", flag: "🇮🇳" },
+      ml: { name: "Malayalam", flag: "🇮🇳" },
+    };
+  
+    const lang = languages[code];
+    return lang ? `${lang.flag} ${lang.name}` : `🌐 Unknown`;
+  }
+  
+  const languageInfo = getLanguageInfo(details.original_language);
+  const year = isSeries 
     ? (details.first_air_date?.split('-')[0] || 'N/A')
     : (details.release_date?.split('-')[0] || 'N/A');
-
-  // Language mapping
-  function getLanguageInfo(code) {
-    const langs = {
-      en: ["English","🇺🇸"], es: ["Spanish","🇪🇸"], fr: ["French","🇫🇷"],
-      de: ["German","🇩🇪"], it: ["Italian","🇮🇹"], ja: ["Japanese","🇯🇵"],
-      ko: ["Korean","🇰🇷"], zh: ["Chinese","🇨🇳"], hi: ["Hindi","🇮🇳"],
-      ru: ["Russian","🇷🇺"], te: ["Telugu","🇮🇳"], ta: ["Tamil","🇮🇳"],
-      ml: ["Malayalam","🇮🇳"]
-    };
-    const info = langs[code];
-    return info ? `${info[1]} ${info[0]}` : `🌐 Unknown`;
-  }
-  const languageInfo = getLanguageInfo(details.original_language);
-
-  // --- NEW HEADER & EPISODE LOGIC ---
+  
+  // Handle series cases
   let headerLine = "";
   let episodeDisplay = "";
-
+  
   if (isSeries) {
     const hasSeason = season !== undefined && season !== null && season !== '';
     const hasEpisode = episode !== undefined && episode !== null && episode !== '';
-
+    
     if (hasSeason && hasEpisode) {
-      const s = String(season).padStart(2, '0');
-      const e = String(episode).padStart(2, '0');
-      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
-      episodeDisplay = `🔊 *S${s} E${e}* 🔥\n`;
-    }
+      const formattedSeason = String(season).padStart(2, '0');
+      const formattedEpisode = String(episode).padStart(2, '0');
+      headerLine = `🦠 *New Episode Added!* - 🔊 S${formattedSeason} E${formattedEpisode} 🔥\n\n`;
+      episodeDisplay = `🔊 S${formattedSeason} E${formattedEpisode} 🔥\n`;
+    } 
     else if (hasSeason) {
-      const s = String(season).padStart(2, '0');
-      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
-      episodeDisplay = `🔊 *S${s}* 🔥\n`;
-    }
+      const formattedSeason = String(season).padStart(2, '0');
+      headerLine = `🦠 *Season Complete!* - 🔊 S${formattedSeason} 🔥\n\n`;
+      episodeDisplay = `🔊 S${formattedSeason} 🔥\n`;
+    } 
     else {
-      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
+      headerLine = "🌟 *New Series Added!*\n\n";
     }
-  } else {
-    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
   }
 
-    // Build core message with plot separator
+  // Handle links - only use custom links or official sources
+  let siteLink = custom_link;
+  let imdbButton = null;
+  
+  if (imdbId) {
+    imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
+  }
+
+// Format message
   let message = `
 ${headerLine}🎬 *${contentTitle}* (${year})
 ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 🗣️ *Language:* ${languageInfo}
-⭐ *Rating:* ${details.vote_average?.toFixed(1) || 'N/A'}/10
-🎭 *Genres:* ${details.genres?.slice(0,3).map(g=>g.name).join(', ') || 'N/A'}
+⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 *Plot:* ${truncatePlot(details.overview)}
-`.trim();
+📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
+  `.trim();
 
-  // Only show a bottom-of-plot separator if we have a banner or note to follow
-  if (clientBanner || note) {
-    message += `\n━━━━━━━━━━━━━━━━━`;
-  }
-
-  // Append banner & note
-  if (note) {
-    message += `\n\n💬 *Note:* ${note}`;
-  }
+  // Add client banner if exists
   if (clientBanner) {
     message += `\n\n${clientBanner}`;
   }
 
-  // Build inline buttons
+  // Add note if provided
+  if (note) {
+    message += `\n\n💬 *Note:* ${note}`;
+  }
+
+  // Prepare buttons
   const buttons = [];
-  if (custom_link) {
-    buttons.push([{ text: "🔗 Watch Here", url: custom_link }]);
+  
+  // Add custom link if provided
+  if (siteLink) {
+    buttons.push([{ text: "🔗 Watch Here", url: siteLink }]);
   }
-  if (imdbId) {
-    const btn = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
-    buttons.length ? buttons[0].push(btn) : buttons.push([btn]);
+  
+  // Add IMDb button if available
+  if (imdbButton) {
+    if (buttons.length > 0) {
+      buttons[0].push(imdbButton);
+    } else {
+      buttons.push([imdbButton]);
+    }
   }
-  if (!custom_link && !imdbId) {
-    buttons.push([{
-      text: "ℹ️ TMDB Page",
+  
+  // Add TMDB button as fallback
+  if (!imdbButton && !siteLink) {
+    buttons.push([{ 
+      text: "ℹ️ TMDB Page", 
       url: `https://www.themoviedb.org/${media_type}/${tmdb_id}`
     }]);
   }
+
+  // Add trailer button if available
   if (trailerKey) {
-    buttons.push([{ text: "🎬 Watch Trailer", url: `https://www.youtube.com/watch?v=${trailerKey}` }]);
+    buttons.push([
+      { text: "🎬 Watch Trailer", url: `https://www.youtube.com/watch?v=${trailerKey}` }
+    ]);
   }
 
-  // Poster sources to try
+  // Prepare poster URLs to try in order
   const posterSources = [];
+  
+  // 1. TMDB original poster (best quality)
   if (details.poster_path) {
-    posterSources.push(
-      `https://image.tmdb.org/t/p/original${details.poster_path}`,
-      `https://image.tmdb.org/t/p/w500${details.poster_path}`
-    );
+    posterSources.push(`https://image.tmdb.org/t/p/original${details.poster_path}`);
   }
+  
+  // 2. TMDB smaller size (more reliable)
+  if (details.poster_path) {
+    posterSources.push(`https://image.tmdb.org/t/p/w500${details.poster_path}`);
+  }
+  
+  // 3. IMDB poster (if available)
   if (imdbId) {
     posterSources.push(`https://img.omdbapi.com/?i=${imdbId}&apikey=${TMDB_API_KEY}&h=1000`);
   }
-  // Last resort: fetch via TMDB images endpoint
+  
+  // 4. Fallback to TMDB API image
   posterSources.push(`https://api.themoviedb.org/3/${media_type}/${tmdb_id}/images?api_key=${TMDB_API_KEY}`);
 
-  // Try sending photo
-  for (const url of posterSources) {
+  // Try all poster sources in sequence
+  let lastError = null;
+  
+  for (const posterUrl of posterSources) {
     try {
-      let photoUrl = url;
-      if (url.includes('/images?')) {
-        const imgs = await (await fetch(url)).json();
-        const list = imgs.posters || imgs.backdrops;
-        if (Array.isArray(list) && list.length) {
-          list.sort((a,b)=>b.width*b.height - a.width*a.height);
-          photoUrl = `https://image.tmdb.org/t/p/original${list[0].file_path}`;
-        } else {
-          continue;
+      // Special handling for TMDB images API
+      if (posterUrl.includes('/images?')) {
+        const imagesResponse = await fetch(posterUrl);
+        const imagesData = await imagesResponse.json();
+        const posters = imagesData.posters || imagesData.backdrops;
+        
+        if (posters && posters.length > 0) {
+          // Sort by highest resolution
+          posters.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+          const bestPoster = posters[0];
+          const imageUrl = `https://image.tmdb.org/t/p/original${bestPoster.file_path}`;
+          
+          const photoResponse = await fetch(
+            `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: CHANNEL_ID,
+                photo: imageUrl,
+                caption: message,
+                parse_mode: "Markdown",
+                reply_markup: { inline_keyboard: buttons }
+              })
+            }
+          );
+          
+          const photoResult = await photoResponse.json();
+          if (photoResult.ok) return "✅ Posted to Telegram with poster!";
         }
-      }
-      // HEAD check for direct URLs
-      if (!url.includes('/images?')) {
-        const head = await fetch(photoUrl, { method: 'HEAD' });
-        if (!head.ok) continue;
-      }
+      } 
+      // Direct image URLs
+      else {
+        // Test if URL is accessible
+        const headResponse = await fetch(posterUrl, { method: 'HEAD' });
+        if (!headResponse.ok) continue;
+        
+        const photoResponse = await fetch(
+            `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: CHANNEL_ID,
+                photo: posterUrl,
+                caption: message,
+                parse_mode: "Markdown",
+                reply_markup: { inline_keyboard: buttons }
+              })
+            }
+          );
 
-      const resp = await fetch(
-        `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: CHANNEL_ID,
-            photo: photoUrl,
-            caption: message,
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: buttons }
-          })
-        }
-      );
-      const data = await resp.json();
-      if (data.ok) return "✅ Posted to Telegram with poster!";
-    } catch (err) {
-      console.warn(`Poster try failed (${url}):`, err.message);
-      continue;
+        const photoResult = await photoResponse.json();
+        if (photoResult.ok) return "✅ Posted to Telegram with poster!";
+      }
+    } catch (error) {
+      lastError = error;
+      console.error(`Poster source failed (${posterUrl}):`, error.message);
+      // Continue to next source
     }
   }
 
-  // Check bot admin status (assuming you have this helper)
+  // Verify bot is admin in channel
   const botStatus = await checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID);
-  if (botStatus.error) return botStatus.message;
+  if (botStatus.error) {
+    return botStatus.message;
+  }
   if (!botStatus.isAdmin) {
+    // Return error object instead of JSON string
     return {
       type: 'bot_admin_error',
       message: `❌ Bot is not an admin in your channel.`,
@@ -397,10 +457,9 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
     };
   }
 
-  // Fallback to text-only
+  // All image sources failed - fallback to text message
   return await sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons);
 }
-
 
 async function checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID) {
   try {
