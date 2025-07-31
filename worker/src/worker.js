@@ -163,6 +163,9 @@ async function sendToTelegram(payload, env) {
   // Get environment variables
   const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
   const TMDB_API_KEY = env.TMDB_API_KEY;
+  const settings = payload.settings || {};
+  const clientBanner = settings.clientBanner || '';
+  
   
   if (!BOT_TOKEN) {
     throw new Error('Missing Telegram Bot Token');
@@ -172,6 +175,11 @@ async function sendToTelegram(payload, env) {
     throw new Error('Missing TMDB API key');
   }
   
+    // Add client banner if exists
+  if (clientBanner) {
+    message += `\n\n${clientBanner}`;
+  }
+
   // Extract payload data
   const { 
     tmdb_id,
