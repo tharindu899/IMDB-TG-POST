@@ -958,3 +958,7 @@ body::before {
 .form-group {
   margin-top: 15px;
 }
+
+.textarea-control::placeholder {
+    font-size: 0.7rem;
+  }
