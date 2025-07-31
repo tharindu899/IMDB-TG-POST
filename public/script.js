@@ -457,10 +457,8 @@ async function handlePost() {
     episode,
     custom_link: customLinkValue,
     note,
-    // channel_id: channelId
-    settings: {
-      channelId: settings.channelId,
-      clientBanner: settings.clientBanner
+    channel_id: channelId
+    client_banner: clientBanner
     }
   };
 
