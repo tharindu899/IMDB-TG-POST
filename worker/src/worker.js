@@ -563,16 +563,20 @@ function escapeMarkdown(text) {
 // Add this helper function to convert HTML tags to Markdown
 function htmlToMarkdownV2(html) {
   return html
-    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
-    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
-    .replace(/<code>|<\/code>/g, '`')
-    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
-    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, (_, href, text) => `[${escapeMarkdownV2(text)}](${escapeMarkdownV2(href)})`)
-    .replace(/<\/?[^>]+(>|$)/g, '') // remove any other tags
-    .split('\n').map(escapeMarkdownV2).join('\n');
+    .replace(/<b>(.*?)<\/b>/g, (_, text) => `*${escapeMarkdownV2(text)}*`)
+    .replace(/<i>(.*?)<\/i>/g, (_, text) => `_${escapeMarkdownV2(text)}_`)
+    .replace(/<strong>(.*?)<\/strong>/g, (_, text) => `*${escapeMarkdownV2(text)}*`)
+    .replace(/<em>(.*?)<\/em>/g, (_, text) => `_${escapeMarkdownV2(text)}_`)
+    .replace(/<code>(.*?)<\/code>/g, (_, text) => `\`${escapeMarkdownV2(text)}\``)
+    .replace(/<spoiler>(.*?)<\/spoiler>/g, (_, text) => `||${escapeMarkdownV2(text)}||`)
+    .replace(/<tg-spoiler>(.*?)<\/tg-spoiler>/g, (_, text) => `||${escapeMarkdownV2(text)}||`)
+    .replace(/<a href="(.*?)">(.*?)<\/a>/g, (_, href, text) => `[${escapeMarkdownV2(text)}](${escapeMarkdownV2(href)})`)
+    .replace(/<\/?[^>]+>/g, '') // Remove any remaining tags
+    .split('\n')
+    .map(escapeMarkdownV2)
+    .join('\n');
 }
 
-// Escape for Telegram MarkdownV2
 function escapeMarkdownV2(text) {
   return text.replace(/([_*\[\]()~`>#+=|{}.!\\\-])/g, '\\$1');
 }
