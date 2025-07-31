@@ -297,7 +297,7 @@ async function sendToTelegram(payload, env) {
     imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
   }
 
-  // Format message
+// Format message
   let message = `
 ${headerLine}🎬 *${contentTitle}* (${year})
 ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
@@ -308,14 +308,14 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
-  // Add note if provided
-  if (note) {
-    message += `\n\n💬 *Note:* ${note}`;
-  }
-  
   // Add client banner if exists
   if (clientBanner) {
     message += `\n\n${clientBanner}`;
+  }
+
+  // Add note if provided
+  if (note) {
+    message += `\n\n💬 *Note:* ${note}`;
   }
 
   // Prepare buttons
