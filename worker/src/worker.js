@@ -557,6 +557,7 @@ function truncatePlot(overview, media_type, tmdb_id) {
 // Helper to escape markdown characters for MarkdownV2
 function escapeMarkdown(text) {
   if (!text) return '';
+  // Only escape these specific MarkdownV2 special characters
   return text.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
 }
 
