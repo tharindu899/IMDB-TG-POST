@@ -399,7 +399,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "Markdown",
+                parse_mode: "MarkdownV2",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -424,7 +424,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "Markdown",
+                parse_mode: "MarkdownV2",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
