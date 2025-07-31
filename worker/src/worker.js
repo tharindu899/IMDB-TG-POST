@@ -267,7 +267,7 @@ async function sendToTelegram(payload, env) {
   
   // Handle series cases
   let headerLine = "";
-  let episodeDisplay = "";
+  let episodeInfo = ""; // Changed variable name for clarity
   
   if (isSeries) {
     const hasSeason = season !== undefined && season !== null && season !== '';
@@ -276,19 +276,19 @@ async function sendToTelegram(payload, env) {
     if (hasSeason && hasEpisode) {
       const formattedSeason = String(season).padStart(2, '0');
       const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
-      episodeDisplay = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
+      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n`;
+      episodeInfo = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
     } 
     else if (hasSeason) {
       const formattedSeason = String(season).padStart(2, '0');
-      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n━━━━━━━━━━━━━━━━━━━\n`;
-      episodeDisplay = `🔊 *S${formattedSeason}* 🔥\n`;
+      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n`;
+      episodeInfo = `🔊 *S${formattedSeason}* 🔥\n`;
     } 
     else {
-      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
+      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n`;
     }
   } else {
-    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n━━━━━━━━━━━━━━━━━━━\n`;
+    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n`;
   }
 
   // Handle links - only use custom links or official sources
@@ -302,8 +302,8 @@ async function sendToTelegram(payload, env) {
 
   // Format message
   let message = `
-${headerLine}🎬 *${contentTitle}* (${year})
-${episodeDisplay}
+${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
+🎬 *${contentTitle}* (${year})
 📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 🗣️ *Language:* ${languageInfo}
 ⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
