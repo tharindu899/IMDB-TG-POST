@@ -302,7 +302,7 @@ body::before {
 
 .form-control {
   width: 100%;
-  margin-top: 18px;
+  margin-top: 5px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
@@ -953,4 +953,8 @@ body::before {
   width: 20px;
   height: 20px;
   color: #4ecdc4;
+}
+
+.form-group {
+  margin-top: 15px;
 }

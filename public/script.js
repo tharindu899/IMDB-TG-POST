@@ -37,12 +37,18 @@ console.log("Using auth token:", AUTH_TOKEN ? AUTH_TOKEN.substring(0, 5) + '...'
 
 // Load settings from localStorage
 function loadSettings() {
-  return JSON.parse(localStorage.getItem('cinemaHubSettings')) || {};
+  return JSON.parse(localStorage.getItem('cinemaHubSettings')) || {
+    channelId: '',
+    clientBanner: '' // Add default banner
+  };
 }
 
 // Save settings to localStorage
 function saveSettings(settings) {
-  localStorage.setItem('cinemaHubSettings', JSON.stringify(settings));
+  localStorage.setItem('cinemaHubSettings', JSON.stringify({
+    ...settings,
+    clientBanner: clientBannerInput.value.trim() // Save banner
+  }));
   updateStatus('✅ Settings saved!', 'success');
 }
 
@@ -50,6 +56,8 @@ function saveSettings(settings) {
 function initSettings() {
   const settings = loadSettings();
   channelIdInput.value = settings.channelId || '';
+  clientBannerInput.value = settings.clientBanner || ''; // Initialize banner
+}
   
   // Event listeners
   settingsBtn.addEventListener('click', () => {
@@ -79,7 +87,6 @@ function initSettings() {
     channelIdInput.value = '';
     updateStatus('🧹 Settings cleared', 'success');
   });
-}
 
 // Initialize
 function init() {
@@ -450,7 +457,11 @@ async function handlePost() {
     episode,
     custom_link: customLinkValue,
     note,
-    channel_id: channelId
+    // channel_id: channelId
+    settings: {
+      channelId: settings.channelId,
+      clientBanner: settings.clientBanner
+    }
   };
 
   try {
