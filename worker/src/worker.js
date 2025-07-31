@@ -315,9 +315,8 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   
   // Add client banner if exists
   if (clientBanner) {
-    // Escape markdown characters in the banner
-    const escapedBanner = escapeMarkdown(clientBanner);
-    message += `\n\n${escapedBanner}`;
+    // Allow HTML formatting in banner
+    message += `\n\n${clientBanner}`;
   }
 
   // Prepare buttons
@@ -521,7 +520,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "Markdown",
+      parse_mode: "HTML", // Change from Markdown to HTML
       reply_markup: { inline_keyboard: buttons }
     };
     
