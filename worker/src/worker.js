@@ -316,7 +316,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   // Add client banner if exists
   if (clientBanner) {
     // Convert HTML tags to Markdown
-    const markdownBanner = htmlToMarkdown(clientBanner);
+    const markdownBanner = escapeMarkdownV2(clientBanner);
     message += `\n\n${markdownBanner}`;
   }
 
