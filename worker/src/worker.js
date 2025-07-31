@@ -174,11 +174,6 @@ async function sendToTelegram(payload, env) {
   if (!TMDB_API_KEY) {
     throw new Error('Missing TMDB API key');
   }
-  
-    // Add client banner if exists
-  if (clientBanner) {
-    message += `\n\n${clientBanner}`;
-  }
 
   // Extract payload data
   const { 
@@ -316,6 +311,11 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   // Add note if provided
   if (note) {
     message += `\n\n💬 *Note:* ${note}`;
+  }
+  
+  // Add client banner if exists
+  if (clientBanner) {
+    message += `\n\n${clientBanner}`;
   }
 
   // Prepare buttons
