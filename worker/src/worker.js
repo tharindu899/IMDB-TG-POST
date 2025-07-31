@@ -399,7 +399,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "MarkdownV2",
+                parse_mode: "HTML",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -424,7 +424,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "MarkdownV2",
+                parse_mode: "HTML",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -521,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "MarkdownV2", // Keep Markdown parse mode
+      parse_mode: "HTML", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
