@@ -28,6 +28,7 @@ const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const closeModal = document.querySelector('.close');
 const channelIdInput = document.getElementById('channelIdInput');
+const clientBannerInput = document.getElementById('clientBannerInput');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 const clearSettingsBtn = document.getElementById('clearSettingsBtn');
 
@@ -45,10 +46,7 @@ function loadSettings() {
 
 // Save settings to localStorage
 function saveSettings(settings) {
-  localStorage.setItem('cinemaHubSettings', JSON.stringify({
-    ...settings,
-    clientBanner: clientBannerInput.value.trim() // Save banner
-  }));
+  localStorage.setItem('cinemaHubSettings', JSON.stringify(settings));
   updateStatus('✅ Settings saved!', 'success');
 }
 
@@ -76,7 +74,8 @@ function initSettings() {
   
   saveSettingsBtn.addEventListener('click', () => {
     const settings = {
-      channelId: channelIdInput.value.trim()
+      channelId: channelIdInput.value.trim(),
+      clientBanner: clientBannerInput.value.trim() // Save banner
     };
     saveSettings(settings);
     setTimeout(() => settingsModal.style.display = 'none', 1000);
@@ -85,6 +84,7 @@ function initSettings() {
   clearSettingsBtn.addEventListener('click', () => {
     localStorage.removeItem('cinemaHubSettings');
     channelIdInput.value = '';
+    clientBannerInput.value = ''; // Clear banner input
     updateStatus('🧹 Settings cleared', 'success');
   });
 
@@ -437,6 +437,7 @@ async function handlePost() {
   
   const settings = loadSettings();
   const channelId = settings.channelId;
+  const clientBanner = settings.clientBanner || '';
   
   if (!channelId) {
     updateStatus('❌ Please set a Channel ID in Settings', 'error');
@@ -457,9 +458,8 @@ async function handlePost() {
     episode,
     custom_link: customLinkValue,
     note,
-    channel_id: channelId
+    channel_id: channelId,
     client_banner: clientBanner
-    }
   };
 
   try {
