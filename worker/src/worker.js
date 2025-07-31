@@ -111,7 +111,7 @@ async function handleBotCommand(request, env) {
 }
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
-  const message = `🎬 *Welcome to IMDB\\-TG\\-POST Bot\\!* 🎬\n\nI help you post new content updates to your channel\\. Use /help to see available commands and setup instructions\\.`;
+  const message = `🎬 *Welcome to IMDB-TG-POST Bot!* 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
   
   const buttons = [
     [
@@ -132,13 +132,13 @@ async function handleStartCommand(BOT_TOKEN, chatId) {
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
   const message = `🤖 *Bot Help Center*\n\nHere are the available commands:\n\n` +
-    `• /start \\- Welcome IMDB\\-TG\\-POST\n` +
-    `• /help \\- Show this help message\n\n` +
+    `• /start - Welcome IMDB-TG-POST\n` +
+    `• /help - Show this help message\n\n` +
     `*How to use:*\n` +
-    `1\\. Add me to your channel as admin\n` +
-    `2\\. Go to site & explore\n` +
-    `3\\. Add your channel ID form the top setting botton\n\n` +
-    `4\\. save and use your imdb and link share to Telegram channel:`;
+    `1. Add me to your channel as admin\n` +
+    `2. Go to site & explore\n` +
+    `3. Add your channel ID form the top setting botton\n\n` +
+    `4. save and use your imdb and link share to Telegram channel:`;
   
   const buttons = [
     [
@@ -165,6 +165,7 @@ async function sendToTelegram(payload, env) {
   const TMDB_API_KEY = env.TMDB_API_KEY;
   const settings = payload.settings || {};
   const clientBanner = settings.clientBanner || '';
+  
   
   if (!BOT_TOKEN) {
     throw new Error('Missing Telegram Bot Token');
@@ -236,7 +237,7 @@ async function sendToTelegram(payload, env) {
 
   // Prepare content details
   const isSeries = media_type === 'tv';
-  const contentTitle = escapeMarkdownV2(details.name || details.title || 'Untitled');
+  const contentTitle = isSeries ? details.name : details.title;
   
   function getLanguageInfo(code) {
     const languages = {
@@ -256,15 +257,13 @@ async function sendToTelegram(payload, env) {
     };
   
     const lang = languages[code];
-    return lang ? `${lang.flag} ${escapeMarkdownV2(lang.name)}` : `🌐 Unknown`;
+    return lang ? `${lang.flag} ${lang.name}` : `🌐 Unknown`;
   }
   
   const languageInfo = getLanguageInfo(details.original_language);
-  const year = escapeMarkdownV2(
-    isSeries 
-      ? (details.first_air_date?.split('-')[0] || 'N/A')
-      : (details.release_date?.split('-')[0] || 'N/A')
-  );
+  const year = isSeries 
+    ? (details.first_air_date?.split('-')[0] || 'N/A')
+    : (details.release_date?.split('-')[0] || 'N/A');
   
   // Handle series cases
   let headerLine = "";
@@ -277,16 +276,16 @@ async function sendToTelegram(payload, env) {
     if (hasSeason && hasEpisode) {
       const formattedSeason = String(season).padStart(2, '0');
       const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine = `🦠 *New Episode Added\\!* \\- 🔊 S${escapeMarkdownV2(formattedSeason)} E${escapeMarkdownV2(formattedEpisode)} 🔥\n\n`;
-      episodeDisplay = `🔊 S${escapeMarkdownV2(formattedSeason)} E${escapeMarkdownV2(formattedEpisode)} 🔥\n`;
+      headerLine = `🦠 *New Episode Added!* - 🔊 S${formattedSeason} E${formattedEpisode} 🔥\n\n`;
+      episodeDisplay = `🔊 S${formattedSeason} E${formattedEpisode} 🔥\n`;
     } 
     else if (hasSeason) {
       const formattedSeason = String(season).padStart(2, '0');
-      headerLine = `🦠 *Season Complete\\!* \\- 🔊 S${escapeMarkdownV2(formattedSeason)} 🔥\n\n`;
-      episodeDisplay = `🔊 S${escapeMarkdownV2(formattedSeason)} 🔥\n`;
+      headerLine = `🦠 *Season Complete!* - 🔊 S${formattedSeason} 🔥\n\n`;
+      episodeDisplay = `🔊 S${formattedSeason} 🔥\n`;
     } 
     else {
-      headerLine = "🌟 *New Series Added\\!*\n\n";
+      headerLine = "🌟 *New Series Added!*\n\n";
     }
   }
 
@@ -295,31 +294,30 @@ async function sendToTelegram(payload, env) {
   let imdbButton = null;
   
   if (imdbId) {
-    imdbButton = { 
-      text: "📌 IMDb Page", 
-      url: `https://www.imdb.com/title/${imdbId}/` 
-    };
+    imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
   }
 
-  // Format message with proper escaping
+// Format message
   let message = `
-${headerLine}🎬 *${contentTitle}* \\(${year}\\)
+${headerLine}🎬 *${contentTitle}* (${year})
 ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
 🗣️ *Language:* ${languageInfo}
 ⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-🎭 *Genres:* ${escapeMarkdownV2(details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A')}
+🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
 📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
   `.trim();
 
   // Add note if provided
   if (note) {
-    message += `\n\n💬 *Note:* ${escapeMarkdownV2(note)}`;
+    message += `\n\n💬 *Note:* ${note}`;
   }
   
   // Add client banner if exists
   if (clientBanner) {
-    message += `\n\n${escapeMarkdownV2(clientBanner)}`;
+    // Convert HTML tags to Markdown
+    const markdownBanner = htmlToMarkdown(clientBanner);
+    message += `\n\n${markdownBanner}`;
   }
 
   // Prepare buttons
@@ -401,7 +399,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "MarkdownV2",
+                parse_mode: "Markdown",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -426,7 +424,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "MarkdownV2",
+                parse_mode: "Markdown",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -523,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "MarkdownV2",
+      parse_mode: "Markdown", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -549,20 +547,25 @@ function truncatePlot(overview, media_type, tmdb_id) {
 
   const maxChars = 200; // Approx. 4 lines in Telegram
   if (overview.length <= maxChars) {
-    return escapeMarkdownV2(overview);
+    return overview;
   }
 
   const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-  return `${escapeMarkdownV2(truncated)}... [Read more](${escapeMarkdownV2(readMoreLink)})`;
+  return `${truncated}... [Read more](${readMoreLink})`;
 }
 
-// Helper to escape markdown characters for Telegram MarkdownV2
-function escapeMarkdownV2(text) {
-  if (!text) return '';
-  
-  // Escape all special characters except URLs
-  return text
-    .replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1')
-    .replace(/\n/g, '\n');
+// Helper to escape markdown characters
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
+}
+
+// Add this helper function to convert HTML tags to Markdown
+function htmlToMarkdown(html) {
+  return html
+    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
+    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
+    .replace(/<code>|<\/code>/g, '`')
+    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
 }
