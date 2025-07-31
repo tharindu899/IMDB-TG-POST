@@ -267,65 +267,54 @@ async function sendToTelegram(payload, env) {
   
   // Handle series cases
   let headerLine = "";
-  let episodeInfo = ""; // Changed variable name for clarity
+  let episodeInfo = "";
   
-  if (isSeries) {
-    const hasSeason = season !== undefined && season !== null && season !== '';
-    const hasEpisode = episode !== undefined && episode !== null && episode !== '';
-    
+    if (isSeries) {
+      const hasSeason = season !== undefined && season !== null && season !== '';
+      const hasEpisode = episode !== undefined && episode !== null && episode !== '';
+  
     if (hasSeason && hasEpisode) {
       const formattedSeason = String(season).padStart(2, '0');
       const formattedEpisode = String(episode).padStart(2, '0');
-      headerLine = `🦠 *NEW EPISODE ADDED!* 🦠\n`;
-      episodeInfo = `🔊 *S${formattedSeason} E${formattedEpisode}* 🔥\n`;
+      headerLine   = `🦠 <b>NEW EPISODE ADDED!</b> 🦠\n`;
+      episodeInfo  = `🔊 <i>S${formattedSeason} E${formattedEpisode}</i> 🔥\n`;
     } 
     else if (hasSeason) {
       const formattedSeason = String(season).padStart(2, '0');
-      headerLine = `🦠 *SEASON COMPLETE!* 🦠\n`;
-      episodeInfo = `🔊 *S${formattedSeason}* 🔥\n`;
+      headerLine   = `🦠 <b>SEASON COMPLETE!</b> 🦠\n`;
+      episodeInfo  = `🔊 <i>S${formattedSeason}</i> 🔥\n`;
     } 
     else {
-      headerLine = `🌟 *NEW SERIES ADDED!* 🌟\n`;
+      headerLine = `🌟 <b>NEW SERIES ADDED!</b> 🌟\n`;
     }
   } else {
-    headerLine = `🌟 *NEW MOVIE ADDED!* 🌟\n`;
+    headerLine = `🌟 <b>NEW MOVIE ADDED!</b> 🌟\n`;
   }
-
-  // Handle links - only use custom links or official sources
-  let siteLink = custom_link;
-  let imdbButton = null;
   
-  if (imdbId) {
-    imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
-  }
-
-
-  // Format message
   let message = `
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
 
-🎬 *${contentTitle}* (${year})
-📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
-🗣️ *Language:* ${languageInfo}
-⭐ *Rating:* ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
-🎭 *Genres:* ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
+🎬 <b>${contentTitle}</b> (${year})
+📺 <b>Type:</b> ${isSeries ? 'TV Series' : 'Movie'}
+🗣️ <b>Language:</b> ${languageInfo}
+⭐ <b>Rating:</b> ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
+🎭 <b>Genres:</b> ${details.genres?.slice(0, 3).map(g => g.name).join(', ') || 'N/A'}
 
-📖 *Plot:* ${truncatePlot(details.overview, media_type, tmdb_id)}
-  `.trim();
+📖 <b>Plot:</b> ${truncatePlot(details.overview, media_type, tmdb_id)}
+`.trim();
 
-  // Add separator before notes/banners if they exist
+  // Separator before notes/banners
   if (note || clientBanner) {
-    message += `━━━━━━━━━━━━━━━━━━━`;
+    message += `\n━━━━━━━━━━━━━━━━━━━`;
   }
   
-  // Add note if provided
+  // Note
   if (note) {
-    message += `\n💬 *Note:* ${note}`;
+    message += `\n💬 <b>Note:</b> ${note}`;
   }
   
-  // Add client banner if exists
+  // Client banner (HTML → Telegram-safe HTML)
   if (clientBanner) {
-    // Convert HTML tags to Markdown
     const markdownBanner = htmlToMarkdown(clientBanner);
     message += `\n\n${markdownBanner}`;
   }
