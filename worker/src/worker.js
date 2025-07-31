@@ -399,7 +399,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: imageUrl,
                 caption: message,
-                parse_mode: "HTML",
+                parse_mode: "Markdown",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -424,7 +424,7 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
                 chat_id: CHANNEL_ID,
                 photo: posterUrl,
                 caption: message,
-                parse_mode: "HTML",
+                parse_mode: "Markdown",
                 reply_markup: { inline_keyboard: buttons }
               })
             }
@@ -521,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "HTML", // Keep Markdown parse mode
+      parse_mode: "Markdown", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -555,15 +555,17 @@ function truncatePlot(overview, media_type, tmdb_id) {
   return `${truncated}... [Read more](${readMoreLink})`;
 }
 
+// Helper to escape markdown characters
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
+}
+
 // Add this helper function to convert HTML tags to Markdown
-function htmlToMarkdownV2(html) {
-  return html
-    .replace(/<b>(.*?)<\/b>/gi, (_, text) => `*${text}*`)
-    .replace(/<i>(.*?)<\/i>/gi, (_, text) => `_${text}_`)
-    .replace(/<code>(.*?)<\/code>/gi, (_, text) => `\`${text}\``)
-    .replace(/<spoiler>(.*?)<\/spoiler>/gi, (_, text) => text)
-    .replace(/<tg-spoiler>(.*?)<\/tg-spoiler>/gi, (_, text) => text)
-    .replace(/<a href="([^"]+)">([^<]+)<\/a>/gi, (_, href, text) => `[${text}](${href})`)
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/?[^>]+>/gi, ''); // remove unknown tags
+function htmlToMarkdown(html) {
+  return html
+    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
+    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
+    .replace(/<code>|<\/code>/g, '`')
+    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
 }
