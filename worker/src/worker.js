@@ -521,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "Markdown", // Keep Markdown parse mode
+      parse_mode: "MarkdownV2", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -561,11 +561,18 @@ function escapeMarkdown(text) {
 }
 
 // Add this helper function to convert HTML tags to Markdown
-function htmlToMarkdown(html) {
+function htmlToMarkdownV2(html) {
   return html
     .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
     .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
     .replace(/<code>|<\/code>/g, '`')
     .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
-    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, (_, href, text) => `[${escapeMarkdownV2(text)}](${escapeMarkdownV2(href)})`)
+    .replace(/<\/?[^>]+(>|$)/g, '') // remove any other tags
+    .split('\n').map(escapeMarkdownV2).join('\n');
+}
+
+// Escape for Telegram MarkdownV2
+function escapeMarkdownV2(text) {
+  return text.replace(/([_*\[\]()~`>#+=|{}.!\\\-])/g, '\\$1');
 }
