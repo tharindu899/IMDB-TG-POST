@@ -315,8 +315,9 @@ ${episodeDisplay}📺 *Type:* ${isSeries ? 'TV Series' : 'Movie'}
   
   // Add client banner if exists
   if (clientBanner) {
-    // Allow HTML formatting in banner
-    message += `\n\n${clientBanner}`;
+    // Convert HTML tags to Markdown
+    const markdownBanner = htmlToMarkdown(clientBanner);
+    message += `\n\n${markdownBanner}`;
   }
 
   // Prepare buttons
@@ -520,7 +521,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "HTML", // Change from Markdown to HTML
+      parse_mode: "Markdown", // Keep Markdown parse mode
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -552,4 +553,19 @@ function truncatePlot(overview, media_type, tmdb_id) {
   const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   return `${truncated}... [Read more](${readMoreLink})`;
+}
+
+// Helper to escape markdown characters
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+-=|{}.!]/g, '\\$&');
+}
+
+// Add this helper function to convert HTML tags to Markdown
+function htmlToMarkdown(html) {
+  return html
+    .replace(/<b>|<\/b>|<strong>|<\/strong>/g, '*')
+    .replace(/<i>|<\/i>|<em>|<\/em>/g, '_')
+    .replace(/<code>|<\/code>/g, '`')
+    .replace(/<spoiler>|<\/spoiler>|<tg-spoiler>|<\/tg-spoiler>/g, '||')
+    .replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '[$2]($1)');
 }
