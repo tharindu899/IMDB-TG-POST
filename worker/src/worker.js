@@ -562,7 +562,7 @@ function truncatePlot(overview, media_type, tmdb_id) {
 
   const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-  return `${truncated}... [Read more](${readMoreLink})`;
+  return `${truncated}... <a href="${readMoreLink}">Read more</a>`;
 }
 
 // Helper to escape markdown characters
