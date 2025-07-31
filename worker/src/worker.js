@@ -298,12 +298,23 @@ function escapeHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function truncatePlot(overview, media_type, tmdb_id) {
-  const max = 200;
-  if (!overview) return 'No plot available';
-  if (overview.length <= max) return overview;
-  return `${overview.slice(0, max).trim()}... <a href="https://www.themoviedb.org/${media_type}/${tmdb_id}">Read more</a>`;
+function escapeMarkdownV2(text) {
+  return text.replace(/[_*[\]()~`>#+=|{}.!\\-]/g, '\\$&');
 }
+
+function truncatePlot(overview, media_type, tmdb_id) {
+  if (!overview) return 'No plot available';
+
+  const maxChars = 200;
+  const cleanText = escapeMarkdownV2(overview);
+  
+  if (cleanText.length <= maxChars) return cleanText;
+
+  const truncated = cleanText.slice(0, maxChars).trim().replace(/\s+$/, '');
+  const escapedUrl = `https://www.themoviedb.org/${media_type}/${tmdb_id}`.replace(/\)/g, '\\)');
+  return `${truncated}... [Read more](${escapedUrl})`;
+}
+
 
 function getLanguageInfo(code) {
   const map = {
