@@ -327,7 +327,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
   if (clientBanner) {
     // Convert HTML tags to Markdown
     const markdownBanner = htmlToMarkdown(clientBanner);
-    message += `\n\n${markdownBanner}`;
+    message += `\n${markdownBanner}`;
   }
 
   // Prepare buttons
@@ -555,7 +555,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-  const maxChars = 100; // Approx. 3 lines in Telegram
+  const maxChars = 250; // Approx. 3 lines in Telegram
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   
   // Escape HTML special characters
@@ -565,11 +565,11 @@ function truncatePlot(overview, media_type, tmdb_id) {
     .replace(/>/g, "&gt;");
 
   if (safeOverview.length <= maxChars) {
-    return `<blockquote>${safeOverview}</blockquote>`;
+    return `<blockquote expandable>${safeOverview}</blockquote>`;
   }
 
   const truncated = safeOverview.slice(0, maxChars).trim();
-  return `<blockquote>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
+  return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
 }
 
 // Helper to escape markdown characters
