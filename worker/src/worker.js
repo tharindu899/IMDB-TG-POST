@@ -555,7 +555,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-  const maxChars = 250; // Approx. 3 lines in Telegram
+  const maxChars = 265; // Approx. 3 lines in Telegram
   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
   
   // Escape HTML special characters
