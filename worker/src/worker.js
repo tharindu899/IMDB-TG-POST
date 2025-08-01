@@ -556,13 +556,20 @@ function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
   const maxChars = 100; // Approx. 3 lines in Telegram
-  if (overview.length <= maxChars) {
-    return overview;
+  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
+  
+  // Escape HTML special characters
+  const safeOverview = overview
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  if (safeOverview.length <= maxChars) {
+    return `<blockquote>${safeOverview}</blockquote>`;
   }
 
-  const truncated = overview.slice(0, maxChars).trim().replace(/\s+$/, '');
-  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-  return `${truncated}... <a href="${readMoreLink}">Read more</a>`;
+  const truncated = safeOverview.slice(0, maxChars).trim();
+  return `<blockquote>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
 }
 
 // Helper to escape markdown characters
