@@ -1,7 +1,7 @@
 # 🎬 IMDB-TG-POST - Telegram Content Poster
 
 ## 🖼️ Theme Previe
-| Color Theme | Black Theme |
+| tg msg  | Site ui |
 |-------------|-------------|
 | <img src="https://i.imgur.com/HcgZs2Q.jpeg" width="300"> | <img src="https://i.imgur.com/qdaPJyd.jpeg" width="300"> |
 
