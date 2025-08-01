@@ -304,7 +304,7 @@ async function sendToTelegram(payload, env) {
   let message = `
 ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━━━
 
-🎬 <b>${contentTitle}</b> (${year})
+🎬 <b>${contentTitle} (${year})"</b>
 📺 <b>Type:</b> ${isSeries ? 'TV Series' : 'Movie'}
 🗣️ <b>Language:</b> ${languageInfo}
 ⭐ <b>Rating:</b> ${details.vote_average ? details.vote_average.toFixed(1) : 'N/A'}/10
