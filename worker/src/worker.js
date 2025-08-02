@@ -112,10 +112,10 @@ async function handleBotCommand(request, env) {
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
   const message = `
-<blockquote expandable>🎬 <b>Welcome to IMDB-TG-POST Bot!</b> 🎬  
+🎬 <b>Welcome to IMDB-TG-POST Bot!</b> 🎬  
 Your personal assistant to post the latest movie & series updates to your Telegram channels and groups.
 
-🛠️ <b>Getting Started:</b>  
+<blockquote expandable>🛠️ <b>Getting Started:</b>  
 Follow these simple steps to set things up:
 
 1️⃣ <b>Add your channel or group</b>  
