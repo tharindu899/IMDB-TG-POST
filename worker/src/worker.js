@@ -124,17 +124,9 @@ Follow these simple steps to set things up:
 4️⃣ ➕ Add your <b>channel/group ID</b>, then save  
 5️⃣ ✅ <b>Setup complete!</b>  
 6️⃣ 🔍 Now you can <b>search and post</b> — test it out and see the bot in action!
-
-📌 Use the <code>/help</code> command to view all features and commands.
 </blockquote>
 
-<b><i>Example Post Preview:</i></b>
-<pre>&lt;blockquote&gt;
-&lt;b&gt;📌 JOIN NOW! 👉 &lt;/b&gt;&lt;a href="https://t.me/flixora_site"&gt; 🗨️Flixora_site 🗨️&lt;/a&gt;
-&lt;i&gt;📢 ALL NEW SERIES &amp; MOVIES 🔎 &lt;/i&gt;
-&lt;tg-spoiler&gt;🌐Visit 👉 &lt;a href="https://toxybox99.eu.org"&gt; FLIXORA 💊&lt;/a&gt;&lt;/tg-spoiler&gt;
-&lt;/blockquote&gt;</pre>
-
+📌 Use the <code>/help</code> command to view all features and commands.
 🎉 <b>Happy posting!</b>
   `.trim();
 
@@ -161,32 +153,53 @@ Follow these simple steps to set things up:
 }
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
-  const message = `🤖 <b>Bot Help Center</b>\n\nHere are the available commands:\n\n` +
-    `• /start - Welcome IMDB-TG-POST\n` +
-    `• /help - Show this help message\n\n` +
-    `<b>How to use:</b>\n` +
-    `1. Add me to your channel as admin\n` +
-    `2. Go to site & explore\n` +
-    `3. Add your channel ID form the top setting botton\n\n` +
-    `4. save and use your imdb and link share to Telegram channel:`;
-  
+  const message = `
+🤖 <b>Bot Help Center</b>
+
+🔍 <b>Available Commands:</b>
+• /start - Welcome message and setup guide
+• /help - Show this help message
+• /setup - Configure your channel settings
+• /post - Create a new content post
+• /search - Find movies/series to share
+
+📝 <b>How to Use:</b>
+1. <b>Add me to your channel</b> as admin with post permissions
+2. <b>Go to our website</b> and explore the features
+3. Tap the <b>settings button (⚙️)</b> to configure
+4. <b>Add your channel ID</b> and save your configuration
+5. Use <b>/search</b> to find content and post directly to your channel
+
+💡<b><i>Example Post Preview:</i></b>
+
+<pre>&lt;blockquote&gt;
+&lt;b&gt;📌 JOIN NOW! 👉 &lt;/b&gt;&lt;a href="https://t.me/flixora_site"&gt; 🗨️Flixora_site 🗨️&lt;/a&gt;
+&lt;i&gt;📢 ALL NEW SERIES &amp; MOVIES 🔎 &lt;/i&gt;
+&lt;tg-spoiler&gt;🌐Visit 👉 &lt;a href="https://toxybox99.eu.org"&gt; FLIXORA 💊&lt;/a&gt;&lt;/tg-spoiler&gt;
+&lt;/blockquote&gt;</pre>
+  `.trim();
+
   const buttons = [
     [
-      { text: "📚 Owner",
-        url: "https://t.me/SLtharindu1" },
-      { text: "🎥 Tutorial",
-        url: "https://example.com/tutorial" }
+      { text: "👤 Owner", url: "https://t.me/SLtharindu1" },
+      { text: "🎥 Tutorial", url: "https://example.com/tutorial" }
     ],
     [
-      { text: "❓ Support",
-        url: "https://t.me/SLtharindu1" },
-      { text: "🐛 Report Issue", 
-        url: "https://t.me/SLtharindu1" }
+      { text: "🆘 Support", url: "https://t.me/SLtharindu1" },
+      { text: "🐛 Report Issue", url: "https://t.me/SLtharindu1" }
+    ],
+    [
+      { text: "🌐 Visit Website", url: "https://imdb-tg-post-font.pages.dev" }
     ]
   ];
 
-  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK');
+  try {
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+    return new Response('OK', { status: 200 });
+  } catch (error) {
+    console.error(`Failed to send help message to ${chatId}:`, error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 }
 
 async function sendToTelegram(payload, env) {
