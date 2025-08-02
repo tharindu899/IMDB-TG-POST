@@ -476,11 +476,11 @@ body::before {
 /* Updated status popup styles */
 .status-popup-container {
   position: fixed;
-  top: 20px;
+  top: 60px;
   right: 20px;
   z-index: 1000;
   max-width: 320px;
-  width: 100%;
+  width: 70%;
   pointer-events: none;
 }
 
@@ -489,7 +489,7 @@ body::before {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 14px;
-  padding: 14px 18px;
+  padding: 10px 10px;
   margin-bottom: 15px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 
