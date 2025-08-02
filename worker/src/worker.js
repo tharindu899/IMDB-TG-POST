@@ -180,10 +180,10 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
       { text: "👤 Owner", url: "https://t.me/SLtharindu1" },
       { text: "🎥 Tutorial", url: "https://example.com/tutorial" }
     ],
-    [
-      { text: "🆘 Support", url: "https://t.me/SLtharindu1" },
-      { text: "🐛 Report Issue", url: "https://t.me/SLtharindu1" }
-    ],
+//     [
+//       { text: "🆘 Support", url: "https://t.me/SLtharindu1" },
+//       { text: "🐛 Report Issue", url: "https://t.me/SLtharindu1" }
+//     ],
     [
       { text: "🌐 Visit Website", url: "https://imdb-tg-post-font.pages.dev" }
     ]
