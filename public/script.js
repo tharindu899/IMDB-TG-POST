@@ -613,9 +613,9 @@ function updateStatus(message, type = '') {
   
   // Set icon based on status type
   let icon = 'ℹ️';
-  if (type === 'loading') icon = '⏳';
-  else if (type === 'success') icon = '✅';
-  else if (type === 'error') icon = '❌';
+  if (type === 'loading') icon = '';
+  else if (type === 'success') icon = '';
+  else if (type === 'error') icon = '';
   
   popupContent.innerHTML = `
     <div class="status-icon">${icon}</div>
