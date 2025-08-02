@@ -82,7 +82,7 @@ export default {
       );
     }
   }
-}
+};
 
 // New function to handle bot commands
 async function handleBotCommand(request, env) {
@@ -93,14 +93,27 @@ async function handleBotCommand(request, env) {
 
   try {
     const update = await request.json();
+    
+    // Handle callback queries (inline button presses)
+    if (update.callback_query) {
+      return await handleCallbackQuery(request, env, update.callback_query);
+    }
+    
+    // Handle text messages
     if (update.message && update.message.text) {
       const chatId = update.message.chat.id;
       const text = update.message.text;
 
       if (text === '/start') {
-        return handleStartCommand(BOT_TOKEN, chatId);
+        return await handleStartCommand(BOT_TOKEN, chatId);
       } else if (text === '/help') {
-        return handleHelpCommand(BOT_TOKEN, chatId);
+        return await handleHelpCommand(BOT_TOKEN, chatId);
+      } else if (text === '/setup') {
+        return await handleSetupCommand(BOT_TOKEN, chatId);
+      } else if (text === '/post') {
+        return await handlePostCommand(BOT_TOKEN, chatId);
+      } else if (text.startsWith('/search')) {
+        return await handleSearchCommand(BOT_TOKEN, chatId, text, env);
       }
     }
     
@@ -202,6 +215,200 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
   }
 }
 
+async function handleSetupCommand(BOT_TOKEN, chatId) {
+  const message = `
+⚙️ <b>Channel Setup Guide</b>
+
+<b>Step 1:</b> Get Your Channel ID
+• Forward any message from your channel to @userinfobot
+• Copy the "Forwarded from chat" ID (starts with -100)
+
+<b>Step 2:</b> Add Bot to Channel
+• Add @your_bot_username to your channel
+• Make bot an admin with "Post Messages" permission
+
+<b>Step 3:</b> Configure Settings
+• Go to the website: https://imdb-tg-post-font.pages.dev
+• Click the settings button (⚙️)
+• Enter your channel ID and save
+
+<b>Step 4:</b> Test the Setup
+• Use /search command to find content
+• Try posting to verify everything works
+
+💡 <b>Need help?</b> Contact @SLtharindu1
+  `.trim();
+
+  const buttons = [
+    [
+      { text: "🌐 Open Website", url: "https://imdb-tg-post-font.pages.dev" },
+      { text: "🤖 Get Channel ID", url: "https://t.me/userinfobot" }
+    ],
+    [
+      { text: "💬 Get Support", url: "https://t.me/SLtharindu1" }
+    ]
+  ];
+
+  try {
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+    return new Response('OK', { status: 200 });
+  } catch (error) {
+    console.error(`Failed to send setup message to ${chatId}:`, error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+async function handlePostCommand(BOT_TOKEN, chatId) {
+  const message = `
+📝 <b>Create New Post</b>
+
+To create a new post, you have two options:
+
+<b>Option 1: Use the Website</b>
+• Visit our website
+• Search for movies/series
+• Click "Post to Channel"
+• Customize your message
+
+<b>Option 2: Use Search Command</b>
+• Type: <code>/search movie name</code>
+• Example: <code>/search Avengers</code>
+• Select from search results
+• Post directly to your channel
+
+<b>Required Setup:</b>
+✅ Bot added to channel as admin
+✅ Channel ID configured on website
+✅ TMDB API access enabled
+
+💡 <b>Tip:</b> Use /setup if you haven't configured your channel yet!
+  `.trim();
+
+  const buttons = [
+    [
+      { text: "🌐 Open Website", url: "https://imdb-tg-post-font.pages.dev" }
+    ],
+    [
+      { text: "⚙️ Setup Guide", callback_data: "setup_guide" },
+      { text: "🔍 Try Search", callback_data: "try_search" }
+    ]
+  ];
+
+  try {
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+    return new Response('OK', { status: 200 });
+  } catch (error) {
+    console.error(`Failed to send post message to ${chatId}:`, error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+async function handleSearchCommand(BOT_TOKEN, chatId, text, env) {
+  const searchQuery = text.replace('/search', '').trim();
+  
+  if (!searchQuery) {
+    const message = `
+🔍 <b>Search Movies & Series</b>
+
+<b>How to search:</b>
+• Type: <code>/search [movie/series name]</code>
+• Example: <code>/search Spider-Man</code>
+• Example: <code>/search Breaking Bad</code>
+
+<b>What happens next:</b>
+1. Bot searches TMDB database
+2. Shows you matching results
+3. You can select and post to your channel
+
+💡 <b>Tip:</b> Be specific with movie/series names for better results!
+    `.trim();
+
+    const buttons = [
+      [
+        { text: "🎬 Search Movies", callback_data: "search_movies" },
+        { text: "📺 Search Series", callback_data: "search_series" }
+      ]
+    ];
+
+    try {
+      await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+      return new Response('OK', { status: 200 });
+    } catch (error) {
+      console.error(`Failed to send search help to ${chatId}:`, error);
+      return new Response('Internal Server Error', { status: 500 });
+    }
+  }
+
+  // Perform actual search
+  try {
+    const TMDB_API_KEY = env?.TMDB_API_KEY;
+    if (!TMDB_API_KEY) {
+      await sendTextMessage(BOT_TOKEN, chatId, "❌ TMDB API not configured. Please contact admin.", []);
+      return new Response('OK', { status: 200 });
+    }
+
+    const searchUrl = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(searchQuery)}`;
+    const searchResponse = await fetch(searchUrl);
+    
+    if (!searchResponse.ok) {
+      throw new Error(`TMDB API error: ${searchResponse.status}`);
+    }
+    
+    const searchData = await searchResponse.json();
+    const results = searchData.results?.slice(0, 10) || [];
+
+    if (results.length === 0) {
+      const message = `
+🔍 <b>Search Results</b>
+
+❌ No results found for: <code>${searchQuery}</code>
+
+<b>Try:</b>
+• Check spelling
+• Use different keywords
+• Search for alternative titles
+      `.trim();
+
+      await sendTextMessage(BOT_TOKEN, chatId, message, []);
+      return new Response('OK', { status: 200 });
+    }
+
+    // Format search results
+    let message = `🔍 <b>Search Results for:</b> <code>${searchQuery}</code>\n\n`;
+    const buttons = [];
+
+    results.forEach((result, index) => {
+      const title = result.title || result.name;
+      const year = (result.release_date || result.first_air_date)?.split('-')[0] || 'N/A';
+      const type = result.media_type === 'tv' ? '📺' : '🎬';
+      const rating = result.vote_average ? result.vote_average.toFixed(1) : 'N/A';
+      
+      message += `${index + 1}. ${type} <b>${title}</b> (${year}) - ⭐${rating}\n`;
+      
+      // Add inline button for each result
+      buttons.push([{
+        text: `${type} ${title} (${year})`,
+        callback_data: `post_${result.media_type}_${result.id}`
+      }]);
+    });
+
+    message += `\n💡 <b>Click any result to post to your channel</b>`;
+
+    try {
+      await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+      return new Response('OK', { status: 200 });
+    } catch (error) {
+      console.error(`Failed to send search results to ${chatId}:`, error);
+      return new Response('Internal Server Error', { status: 500 });
+    }
+
+  } catch (error) {
+    console.error('Search error:', error);
+    await sendTextMessage(BOT_TOKEN, chatId, `❌ Search failed: ${error.message}`, []);
+    return new Response('OK', { status: 200 });
+  }
+}
+
 async function sendToTelegram(payload, env) {
   // Get environment variables
   const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
@@ -243,6 +450,11 @@ async function sendToTelegram(payload, env) {
   // Get full details directly using ID
   const detailsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}?api_key=${TMDB_API_KEY}`;
   const detailsResponse = await fetch(detailsUrl);
+  
+  if (!detailsResponse.ok) {
+    throw new Error(`TMDB API error: ${detailsResponse.status}`);
+  }
+  
   const details = await detailsResponse.json();
 
   // Handle invalid ID
@@ -255,8 +467,10 @@ async function sendToTelegram(payload, env) {
   try {
     const externalIdsUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/external_ids?api_key=${TMDB_API_KEY}`;
     const externalResponse = await fetch(externalIdsUrl);
-    const externalIds = await externalResponse.json();
-    imdbId = externalIds.imdb_id;
+    if (externalResponse.ok) {
+      const externalIds = await externalResponse.json();
+      imdbId = externalIds.imdb_id;
+    }
   } catch (error) {
     console.error("Failed to fetch external IDs:", error);
   }
@@ -266,13 +480,15 @@ async function sendToTelegram(payload, env) {
   try {
     const videosUrl = `https://api.themoviedb.org/3/${media_type}/${tmdb_id}/videos?api_key=${TMDB_API_KEY}`;
     const videosResponse = await fetch(videosUrl);
-    const videosData = await videosResponse.json();
-    
-    if (videosData.results?.length > 0) {
-      const trailer = videosData.results.find(
-        v => v.site === "YouTube" && v.type === "Trailer"
-      );
-      if (trailer) trailerKey = trailer.key;
+    if (videosResponse.ok) {
+      const videosData = await videosResponse.json();
+      
+      if (videosData.results?.length > 0) {
+        const trailer = videosData.results.find(
+          v => v.site === "YouTube" && v.type === "Trailer"
+        );
+        if (trailer) trailerKey = trailer.key;
+      }
     }
   } catch (error) {
     console.error("Failed to fetch videos:", error);
@@ -341,7 +557,6 @@ async function sendToTelegram(payload, env) {
   if (imdbId) {
     imdbButton = { text: "📌 IMDb Page", url: `https://www.imdb.com/title/${imdbId}/` };
   }
-
 
   // Format message
   let message = `
@@ -417,75 +632,37 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
   if (details.poster_path) {
     posterSources.push(`https://image.tmdb.org/t/p/w500${details.poster_path}`);
   }
-  
-  // 3. IMDB poster (if available)
-  if (imdbId) {
-    posterSources.push(`https://img.omdbapi.com/?i=${imdbId}&apikey=${TMDB_API_KEY}&h=1000`);
-  }
-  
-  // 4. Fallback to TMDB API image
-  posterSources.push(`https://api.themoviedb.org/3/${media_type}/${tmdb_id}/images?api_key=${TMDB_API_KEY}`);
 
   // Try all poster sources in sequence
   let lastError = null;
   
   for (const posterUrl of posterSources) {
     try {
-      // Special handling for TMDB images API
-      if (posterUrl.includes('/images?')) {
-        const imagesResponse = await fetch(posterUrl);
-        const imagesData = await imagesResponse.json();
-        const posters = imagesData.posters || imagesData.backdrops;
-        
-        if (posters && posters.length > 0) {
-          // Sort by highest resolution
-          posters.sort((a, b) => (b.width * b.height) - (a.width * a.height));
-          const bestPoster = posters[0];
-          const imageUrl = `https://image.tmdb.org/t/p/original${bestPoster.file_path}`;
-          
-          const photoResponse = await fetch(
-            `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: CHANNEL_ID,
-                photo: imageUrl,
-                caption: message,
-                parse_mode: "HTML",
-                reply_markup: { inline_keyboard: buttons }
-              })
-            }
-          );
-          
-          const photoResult = await photoResponse.json();
-          if (photoResult.ok) return "✅ Posted to Telegram with poster!";
-        }
-      } 
-      // Direct image URLs
-      else {
-        // Test if URL is accessible
-        const headResponse = await fetch(posterUrl, { method: 'HEAD' });
-        if (!headResponse.ok) continue;
-        
-        const photoResponse = await fetch(
-            `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: CHANNEL_ID,
-                photo: posterUrl,
-                caption: message,
-                parse_mode: "HTML",
-                reply_markup: { inline_keyboard: buttons }
-              })
-            }
-          );
+      // Test if URL is accessible
+      const headResponse = await fetch(posterUrl, { method: 'HEAD' });
+      if (!headResponse.ok) continue;
+      
+      const photoResponse = await fetch(
+          `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: CHANNEL_ID,
+              photo: posterUrl,
+              caption: message,
+              parse_mode: "HTML",
+              reply_markup: { inline_keyboard: buttons }
+            })
+          }
+        );
 
-        const photoResult = await photoResponse.json();
-        if (photoResult.ok) return "✅ Posted to Telegram with poster!";
-      }
+      const photoResult = await photoResponse.json();
+      if (photoResult.ok) return "✅ Posted to Telegram with poster!";
+      
+      // Log the specific error from Telegram
+      console.error(`Telegram photo error:`, photoResult);
+      
     } catch (error) {
       lastError = error;
       console.error(`Poster source failed (${posterUrl}):`, error.message);
@@ -540,7 +717,7 @@ async function checkBotAdminStatus(BOT_TOKEN, CHANNEL_ID) {
     
     if (!memberInfo.ok) {
       // Handle specific "member list inaccessible" error
-      if (memberInfo.description.includes("member list is inaccessible")) {
+      if (memberInfo.description && memberInfo.description.includes("member list is inaccessible")) {
         return {
           error: true,
           message: `❌ Bot is not in your channel. Please add @${botUsername} to your channel first!`,
@@ -574,7 +751,7 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
     const payload = {
       chat_id: CHANNEL_ID,
       text: message,
-      parse_mode: "HTML", // Keep Markdown parse mode
+      parse_mode: "HTML",
       reply_markup: { inline_keyboard: buttons }
     };
     
@@ -598,24 +775,21 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-//   const maxChars = 265; // Approx. 3 lines in Telegram
-//   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-
+  const maxChars = 265; // Approx. 3 lines in Telegram
+  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
+  
   // Escape HTML special characters
   const safeOverview = overview
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Always show full plot in expandable block
-  return `<blockquote expandable>${safeOverview}</blockquote>`;
+  if (safeOverview.length <= maxChars) {
+    return `<blockquote expandable>${safeOverview}</blockquote>`;
+  }
 
-//   if (safeOverview.length <= maxChars) {
-//     return `<blockquote expandable>${safeOverview}</blockquote>`;
-//   }
-// 
-//   const truncated = safeOverview.slice(0, maxChars).trim();
-//   return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
+  const truncated = safeOverview.slice(0, maxChars).trim();
+  return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
 }
 
 // Helper to escape markdown characters
@@ -645,4 +819,66 @@ function htmlToMarkdown(html) {
       /<a\s+href="([^"]*)">([\s\S]*?)<\/a>/g,
       '<a href="$1">$2</a>'
     );
+}
+
+// Handle callback queries from inline buttons
+async function handleCallbackQuery(request, env, callbackQuery) {
+  const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
+  const chatId = callbackQuery.message.chat.id;
+  const data = callbackQuery.callback_data;
+  const queryId = callbackQuery.id;
+
+  // Answer the callback query first
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      callback_query_id: queryId,
+      text: "Processing your request..."
+    })
+  });
+
+  try {
+    if (data.startsWith('post_')) {
+      // Extract media type and ID from callback data
+      const parts = data.split('_');
+      const mediaType = parts[1]; // 'movie' or 'tv' 
+      const tmdbId = parts[2];
+
+      // Create payload for posting
+      const payload = {
+        tmdb_id: tmdbId,
+        media_type: mediaType,
+        channel_id: env.TELEGRAM_CHANNEL_ID, // Use default channel or get from user settings
+        settings: {}
+      };
+
+      // Post to Telegram using existing function
+      const result = await sendToTelegram(payload, env);
+      
+      // Send confirmation message
+      let confirmMessage;
+      if (typeof result === 'string' && result.includes('✅')) {
+        confirmMessage = `✅ <b>Posted successfully!</b>\n\nContent has been posted to your channel.`;
+      } else {
+        confirmMessage = `❌ <b>Failed to post:</b>\n\n${typeof result === 'object' ? result.message : result}`;
+      }
+
+      await sendTextMessage(BOT_TOKEN, chatId, confirmMessage, []);
+      
+    } else if (data === 'setup_guide') {
+      return await handleSetupCommand(BOT_TOKEN, chatId);
+    } else if (data === 'try_search') {
+      const message = "🔍 <b>Try searching now!</b>\n\nType: <code>/search [movie name]</code>\nExample: <code>/search Avengers</code>";
+      await sendTextMessage(BOT_TOKEN, chatId, message, []);
+    }
+
+    return new Response('OK', { status: 200 });
+    
+  } catch (error) {
+    console.error('Callback query error:', error);
+    const errorMessage = `❌ <b>Error:</b> ${error.message}`;
+    await sendTextMessage(BOT_TOKEN, chatId, errorMessage, []);
+    return new Response('OK', { status: 200 });
+  }
 }
