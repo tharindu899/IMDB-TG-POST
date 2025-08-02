@@ -159,12 +159,16 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
 🔍 <b>Available Commands:</b>
 • /start - Welcome message and setup guide
 • /help - Show this help message
+• /setup - Configure your channel settings
+• /post - Create a new content post
+• /search - Find movies/series to share
 
 📝 <b>How to Use:</b>
 1. <b>Add me to your channel</b> as admin with post permissions
 2. <b>Go to our website</b> and explore the features
 3. Tap the <b>settings button (⚙️)</b> to configure
 4. <b>Add your channel ID</b> and save your configuration
+5. Use <b>/search</b> to find content and post directly to your channel
 
 💡<b><i>Example Post Preview:</i></b>
 
@@ -180,10 +184,10 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
       { text: "👤 Owner", url: "https://t.me/SLtharindu1" },
       { text: "🎥 Tutorial", url: "https://example.com/tutorial" }
     ],
-//     [
-//       { text: "🆘 Support", url: "https://t.me/SLtharindu1" },
-//       { text: "🐛 Report Issue", url: "https://t.me/SLtharindu1" }
-//     ],
+    [
+      { text: "🆘 Support", url: "https://t.me/SLtharindu1" },
+      { text: "🐛 Report Issue", url: "https://t.me/SLtharindu1" }
+    ],
     [
       { text: "🌐 Visit Website", url: "https://imdb-tg-post-font.pages.dev" }
     ]
@@ -594,21 +598,24 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-  const maxChars = 265; // Approx. 3 lines in Telegram
-  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-  
+//   const maxChars = 265; // Approx. 3 lines in Telegram
+//   const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
+
   // Escape HTML special characters
   const safeOverview = overview
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  if (safeOverview.length <= maxChars) {
-    return `<blockquote expandable>${safeOverview}</blockquote>`;
-  }
+  // Always show full plot in expandable block
+  return `<blockquote expandable>${safeOverview}</blockquote>`;
 
-  const truncated = safeOverview.slice(0, maxChars).trim();
-  return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
+//   if (safeOverview.length <= maxChars) {
+//     return `<blockquote expandable>${safeOverview}</blockquote>`;
+//   }
+// 
+//   const truncated = safeOverview.slice(0, maxChars).trim();
+//   return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
 }
 
 // Helper to escape markdown characters
