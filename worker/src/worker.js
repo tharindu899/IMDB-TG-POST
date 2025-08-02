@@ -111,8 +111,25 @@ async function handleBotCommand(request, env) {
 }
 
 async function handleStartCommand(BOT_TOKEN, chatId) {
-  const message = `🎬 <b>Welcome to IMDB-TG-POST Bot!</b> 🎬\n\nI help you post new content updates to your channel. Use /help to see available commands and setup instructions.`;
-  
+  const message = `
+<blockquote expandable>🎬 <b>Welcome to IMDB-TG-POST Bot!</b> 🎬  
+Your personal assistant to post the latest movie & series updates to your Telegram channels and groups.
+
+🛠️ <b>Getting Started:</b>  
+Follow these simple steps to set things up:
+
+1️⃣ <b>Add your channel or group</b>  
+2️⃣ <b>Make the bot an admin</b>  
+3️⃣ 🔧 Go to the website and tap the ⚙️  
+4️⃣ ➕ Add your <b>channel/group ID</b>, then save  
+5️⃣ ✅ <b>Setup complete!</b>  
+6️⃣ 🔍 Now you can <b>search and post</b> — test it out and see the bot in action!
+
+📌 Use the <code>/help</code> command to view all features and commands.
+
+🎉 <b>Happy posting!</b></blockquote>
+  `.trim();
+
   const buttons = [
     [
       { 
@@ -126,8 +143,13 @@ async function handleStartCommand(BOT_TOKEN, chatId) {
     ]
   ];
 
-  await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
-  return new Response('OK');
+  try {
+    await sendTextMessage(BOT_TOKEN, chatId, message, buttons);
+    return new Response('OK', { status: 200 });
+  } catch (error) {
+    console.error(`Failed to send start message to ${chatId}:`, error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 }
 
 async function handleHelpCommand(BOT_TOKEN, chatId) {
