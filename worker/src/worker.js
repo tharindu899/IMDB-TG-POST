@@ -102,7 +102,11 @@ async function handleBotCommand(request, env) {
     // Handle text messages
     if (update.message && update.message.text) {
       const chatId = update.message.chat.id;
-      const text = update.message.text;
+      const text = update.message.text.trim();
+
+      if (!text) {
+        return new Response('OK');
+      }
 
       if (text === '/start') {
         return await handleStartCommand(BOT_TOKEN, chatId);
@@ -304,6 +308,13 @@ To create a new post, you have two options:
 }
 
 async function handleSearchCommand(BOT_TOKEN, chatId, text, env) {
+  // Safety check for text parameter
+  if (!text || typeof text !== 'string') {
+    const message = "❌ Invalid search command. Please try again.";
+    await sendTextMessage(BOT_TOKEN, chatId, message, []);
+    return new Response('OK', { status: 200 });
+  }
+
   const searchQuery = text.replace('/search', '').trim();
   
   if (!searchQuery) {
@@ -824,9 +835,20 @@ function htmlToMarkdown(html) {
 // Handle callback queries from inline buttons
 async function handleCallbackQuery(request, env, callbackQuery) {
   const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
+  
+  // Safety checks
+  if (!callbackQuery || !callbackQuery.message || !callbackQuery.message.chat) {
+    return new Response('OK', { status: 200 });
+  }
+  
   const chatId = callbackQuery.message.chat.id;
   const data = callbackQuery.callback_data;
   const queryId = callbackQuery.id;
+
+  // Safety check for callback_data
+  if (!data || typeof data !== 'string') {
+    return new Response('OK', { status: 200 });
+  }
 
   // Answer the callback query first
   await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
