@@ -125,9 +125,9 @@ Follow these simple steps to set things up:
 5️⃣ ✅ <b>Setup complete!</b>  
 6️⃣ 🔍 Now you can <b>search and post</b> — test it out and see the bot in action!
 </blockquote>
+📌 Use the /help command to view all features and commands.
 
-📌 Use the <code>/help</code> command to view all features and commands.
-🎉 <b>Happy posting!</b>
+<i><u>🎉 <b>Happy posting!</b></u></i>
   `.trim();
 
   const buttons = [
