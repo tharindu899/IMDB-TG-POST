@@ -129,13 +129,12 @@ Follow these simple steps to set things up:
 
 🎉 <b>Happy posting!</b></blockquote>
 
-<b><u>Example Post Preview:</u></b>
-
+<tg-spoiler><b><i>Example Post Preview:</i></b>
 <pre>&lt;blockquote&gt;
 &lt;b&gt;📌 JOIN NOW! 👉 &lt;/b&gt;&lt;a href="https://t.me/flixora_site"&gt; 🗨️Flixora_site 🗨️&lt;/a&gt;
 &lt;i&gt;📢 ALL NEW SERIES &amp; MOVIES 🔎 &lt;/i&gt;
 &lt;tg-spoiler&gt;🌐Visit 👉 &lt;a href="https://toxybox99.eu.org"&gt; FLIXORA 💊&lt;/a&gt;&lt;/tg-spoiler&gt;
-&lt;/blockquote&gt;</pre>
+&lt;/blockquote&gt;</pre></tg-spoiler>
 
   `.trim();
 
