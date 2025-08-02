@@ -126,11 +126,11 @@ Follow these simple steps to set things up:
 6️⃣ 🔍 Now you can <b>search and post</b> — test it out and see the bot in action!
 
 <b>Example Post Preview:</b>
-<pre>&lt;blockquote&gt;
+<code>&lt;blockquote&gt;
 &lt;b&gt;📌 JOIN NOW! 👉 &lt;/b&gt;&lt;a href="https://t.me/flixora_site"&gt; 🗨️Flixora_site 🗨️&lt;/a&gt;
 &lt;i&gt;📢 ALL NEW SERIES &amp; MOVIES 🔎 &lt;/i&gt;
 &lt;tg-spoiler&gt;🌐Visit 👉 &lt;a href="https://toxybox99.eu.org"&gt; FLIXORA 💊&lt;/a&gt;&lt;/tg-spoiler&gt;
-&lt;/blockquote&gt;</pre>
+&lt;/blockquote&gt;</code>
 
 📌 Use the <code>/help</code> command to view all features and commands.
 
