@@ -125,6 +125,13 @@ Follow these simple steps to set things up:
 5️⃣ ✅ <b>Setup complete!</b>  
 6️⃣ 🔍 Now you can <b>search and post</b> — test it out and see the bot in action!
 
+<b>Example Post Preview:</b>
+<code><blockquote>
+<b>📌 JOIN NOW! 👉 </b><a href="https://t.me/flixora_site"> 🗨️Flixora_site 🗨️</a>
+<i>📢 ALL NEW SERIES & MOVIES 🔎 </i>
+<tg-spoiler>🌐Visit 👉 <a href="https://toxybox99.eu.org"> FLIXORA 💊</a></tg-spoiler>
+</blockquote></code>
+
 📌 Use the <code>/help</code> command to view all features and commands.
 
 🎉 <b>Happy posting!</b></blockquote>
