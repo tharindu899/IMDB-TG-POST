@@ -159,16 +159,12 @@ async function handleHelpCommand(BOT_TOKEN, chatId) {
 🔍 <b>Available Commands:</b>
 • /start - Welcome message and setup guide
 • /help - Show this help message
-• /setup - Configure your channel settings
-• /post - Create a new content post
-• /search - Find movies/series to share
 
 📝 <b>How to Use:</b>
 1. <b>Add me to your channel</b> as admin with post permissions
 2. <b>Go to our website</b> and explore the features
 3. Tap the <b>settings button (⚙️)</b> to configure
 4. <b>Add your channel ID</b> and save your configuration
-5. Use <b>/search</b> to find content and post directly to your channel
 
 💡<b><i>Example Post Preview:</i></b>
 
