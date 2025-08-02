@@ -618,21 +618,14 @@ async function sendTextMessage(BOT_TOKEN, CHANNEL_ID, message, buttons) {
 function truncatePlot(overview, media_type, tmdb_id) {
   if (!overview) return 'No plot available';
 
-  const maxChars = 265; // Approx. 3 lines in Telegram
-  const readMoreLink = `https://www.themoviedb.org/${media_type}/${tmdb_id}`;
-  
   // Escape HTML special characters
   const safeOverview = overview
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  if (safeOverview.length <= maxChars) {
-    return `<blockquote expandable>${safeOverview}</blockquote>`;
-  }
-
-  const truncated = safeOverview.slice(0, maxChars).trim();
-  return `<blockquote expandable>${truncated}... <a href="${readMoreLink}">Read more</a></blockquote>`;
+  // Always show full plot in expandable block
+  return `<blockquote expandable>${safeOverview}</blockquote>`;
 }
 
 // Helper to escape markdown characters
@@ -711,9 +704,6 @@ async function handleCallbackQuery(request, env, callbackQuery) {
       
     } else if (data === 'setup_guide') {
       return await handleSetupCommand(BOT_TOKEN, chatId);
-    } else if (data === 'try_search') {
-      const message = "🔍 <b>Try searching now!</b>\n\nType: <code>/search [movie name]</code>\nExample: <code>/search Avengers</code>";
-      await sendTextMessage(BOT_TOKEN, chatId, message, []);
     }
 
     return new Response('OK', { status: 200 });
