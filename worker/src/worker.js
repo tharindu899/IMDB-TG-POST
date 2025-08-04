@@ -417,7 +417,7 @@ ${headerLine}${episodeInfo}━━━━━━━━━━━━━━━━━�
   
   // Add note if provided
   if (note) {
-    message += `\n💬 <b>Note:</b> ${note}`;
+    message += `\n💬 <b>Note:</b> ${note}\n`;
   }
   
   // Add client banner if exists
